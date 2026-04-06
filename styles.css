@@ -722,6 +722,46 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Botón WhatsApp ── */
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  background: #25D366;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 13px 20px;
+  font-family: var(--font-body);
+  font-size: .95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  box-shadow: 0 3px 12px rgba(37,211,102,.35);
+}
+.btn-whatsapp:hover {
+  background: #1ebe5d;
+  box-shadow: 0 4px 18px rgba(37,211,102,.5);
+  transform: translateY(-1px);
+}
+.btn-whatsapp:active { transform: scale(.98); }
+
+.btn-whatsapp-disabled {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 13px 20px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  font-style: italic;
+}
+
 /* ── Botón copiar mensaje en detalle ── */
 .detail-section-title-row {
   display: flex;
