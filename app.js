@@ -441,11 +441,15 @@ function openDetail(id) {
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">Mensaje de primer contacto</div>
-      <div class="detail-item">
-        ${m.mensaje_primer_contacto
-          ? `<div class="detail-text-block">${m.mensaje_primer_contacto}</div>`
-          : `<div class="detail-text-block" style="color:var(--text-muted);font-style:italic">${MENSAJE_BIENVENIDA_DEFAULT}</div>`}
+      <div class="detail-section-title-row">
+        <span class="detail-section-title" style="margin-bottom:0;border:none">Mensaje de primer contacto</span>
+        <button class="btn-copy-msg" id="btn-copy-msg" title="Copiar mensaje">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar
+        </button>
+      </div>
+      <div class="detail-item" style="margin-top:8px">
+        <div class="detail-text-block" id="detail-msg-text">${m.mensaje_primer_contacto || MENSAJE_BIENVENIDA_DEFAULT}</div>
       </div>
     </div>
 
@@ -499,6 +503,25 @@ function openDetail(id) {
 
   modalDetail.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Botón copiar mensaje
+  document.getElementById('btn-copy-msg').addEventListener('click', async () => {
+    const texto = document.getElementById('detail-msg-text').innerText;
+    try {
+      await navigator.clipboard.writeText(texto);
+      const btn = document.getElementById('btn-copy-msg');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg> ¡Copiado!`;
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent)';
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar`;
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }, 2000);
+    } catch {
+      showToast('No se pudo copiar. Seleccioná el texto manualmente.');
+    }
+  });
 }
 
 [detailClose].forEach(el => {

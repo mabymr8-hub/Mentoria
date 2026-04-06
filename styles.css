@@ -722,6 +722,38 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Botón copiar mensaje en detalle ── */
+.detail-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--accent-light);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.btn-copy-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-family: var(--font-body);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-copy-msg:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
 /* ── Mensaje de primer contacto ── */
 .msg-primer-wrap { margin-top: 4px; }
 
