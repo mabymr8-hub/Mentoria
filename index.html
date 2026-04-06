@@ -66,6 +66,9 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
             <span>PDF</span>
           </button>
+          <button class="btn-icon" id="btn-config" title="Mensaje de bienvenida">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
           <button class="btn-icon" id="btn-logout" title="Cerrar sesión">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </button>
@@ -199,19 +202,6 @@
           </div>
         </div>
 
-        <!-- Mensaje de primer contacto -->
-        <div class="form-group msg-primer-wrap">
-          <div class="msg-primer-header">
-            <label>Mensaje de primer contacto</label>
-            <button type="button" class="btn-reset-msg" id="btn-reset-msg" title="Restaurar texto original">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
-              Restaurar
-            </button>
-          </div>
-          <textarea id="form-mensaje-primer" rows="7" placeholder="Escribí el mensaje de bienvenida..."></textarea>
-          <p class="msg-hint">Este texto se precarga automáticamente en cada nuevo registro. Podés editarlo para este caso puntual sin que afecte los próximos.</p>
-        </div>
-
         <div class="form-section-title">Información de la persona</div>
         <div class="form-group">
           <label>Oficio / Profesión</label>
@@ -263,6 +253,34 @@
       <div class="modal-footer">
         <button class="btn-danger" id="detail-btn-delete">Eliminar</button>
         <button class="btn-primary" id="detail-btn-edit">Editar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL: MENSAJE GLOBAL DE BIENVENIDA
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-config">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>✏️ Mensaje de bienvenida</h2>
+        <button class="btn-icon modal-close" id="config-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="msg-hint" style="margin-bottom:14px">Este mensaje se usa en <strong>todas las tarjetas</strong> al enviar por WhatsApp. Editalo acá y se aplica a todos los contactos nuevos y existentes que no tengan mensaje propio.</p>
+        <div class="form-group">
+          <textarea id="config-mensaje" rows="10" placeholder="Escribí el mensaje de bienvenida..."></textarea>
+        </div>
+        <button class="btn-reset-msg" id="btn-config-reset" style="margin-top:4px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+          Restaurar texto original
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="config-cancel">Cancelar</button>
+        <button class="btn-primary" id="config-save">Guardar mensaje</button>
       </div>
     </div>
   </div>
