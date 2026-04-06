@@ -722,6 +722,54 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Mensaje de primer contacto ── */
+.msg-primer-wrap { margin-top: 4px; }
+
+.msg-primer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.msg-primer-header label { margin-bottom: 0; }
+
+.btn-reset-msg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-reset-msg:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+#form-mensaje-primer {
+  min-height: 140px;
+  line-height: 1.6;
+  font-size: .88rem;
+}
+
+.msg-hint {
+  margin-top: 6px;
+  font-size: .73rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
 /* ══════════════════════════════════════
    TOAST
 ══════════════════════════════════════ */

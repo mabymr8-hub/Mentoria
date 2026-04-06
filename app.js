@@ -5,11 +5,23 @@
 ═══════════════════════════════════════════════ */
 
 /* ──────────────────────────────────────────────
-   CONFIGURACIÓN SUPABASE
+   MENSAJE DE PRIMER CONTACTO — Texto predeterminado
+   Se precarga en cada nuevo registro.
+   La mentora puede editarlo por caso sin perder el original.
+────────────────────────────────────────────── */
+const MENSAJE_BIENVENIDA_DEFAULT = `¡Hola! 👋 Mi nombre es Maby Mereles, soy Counselor egresada de Holos Capital Counseling.
+Me pongo en contacto porque en esta etapa voy a acompañarte como tu mentora. 🌱
+La mentoría es un espacio pensado para vos: para compartir dudas, orientarte en el camino y acompañarte desde la experiencia de haber transitado este mismo recorrido.
+Estoy disponible para lo que necesites, ya sea consultas académicas, orientación sobre la carrera o simplemente charlar sobre el proceso. No dudes en escribirme cuando quieras.
+¡Bienvenido/a a esta etapa! Estoy muy contenta de acompañarte. 😊
+Maby Mereles
+Counselor — Holos Capital Counseling`;
+
+
    → Reemplazá estos valores con los de tu proyecto
 ────────────────────────────────────────────── */
-const SUPABASE_URL = 'https://qhawykutieqkxcexlrco.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoYXd5a3V0aWVxa3hjZXhscmNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MTgxMTUsImV4cCI6MjA5MDk5NDExNX0.HU6FOExbXguVuKm2lOR6RXddXD75nqjxXVAH29faN0E';
+const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TU_ANON_KEY';
 
 // Inicialización del cliente Supabase
 const { createClient } = supabase;
@@ -49,6 +61,7 @@ const loadingState   = document.getElementById('loading-state');
 const emptyState     = document.getElementById('empty-state');
 const searchInput    = document.getElementById('search-input');
 const filterChips    = document.querySelectorAll('.chip');
+const btnResetMsg    = document.getElementById('btn-reset-msg');
 const toast          = document.getElementById('toast');
 
 // Estadísticas
@@ -306,12 +319,15 @@ function closeFormModal() {
 function clearForm() {
   ['form-id','form-nombre','form-apellido','form-telefono','form-email',
    'form-fecha-primer','form-fecha-ultimo','form-respondio','form-tipo-contacto',
-   'form-oficio','form-inquietudes','form-respuesta','form-observaciones','form-estado']
+   'form-oficio','form-inquietudes','form-respuesta','form-observaciones','form-estado',
+   'form-mensaje-primer']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
   document.getElementById('form-estado').value = 'Sin respuesta';
+  // Precargar el mensaje de bienvenida en nuevos registros
+  document.getElementById('form-mensaje-primer').value = MENSAJE_BIENVENIDA_DEFAULT;
 }
 
 /** Rellena el formulario con los datos de una mentoría */
@@ -330,6 +346,7 @@ function fillForm(m) {
   document.getElementById('form-respuesta').value = m.respuesta_mentor || '';
   document.getElementById('form-observaciones').value = m.observaciones || '';
   document.getElementById('form-estado').value = m.estado || 'Sin respuesta';
+  document.getElementById('form-mensaje-primer').value = m.mensaje_primer_contacto || MENSAJE_BIENVENIDA_DEFAULT;
 }
 
 /** Lee los valores del formulario y devuelve un objeto */
@@ -348,8 +365,15 @@ function readForm() {
     respuesta_mentor:     document.getElementById('form-respuesta').value.trim() || null,
     observaciones:        document.getElementById('form-observaciones').value.trim() || null,
     estado:               document.getElementById('form-estado').value,
+    mensaje_primer_contacto: document.getElementById('form-mensaje-primer').value.trim() || null,
   };
 }
+
+/** Restaura el mensaje de bienvenida al texto original */
+btnResetMsg.addEventListener('click', () => {
+  document.getElementById('form-mensaje-primer').value = MENSAJE_BIENVENIDA_DEFAULT;
+  showToast('Mensaje restaurado al texto original');
+});
 
 /** Guarda (crea o actualiza) */
 btnSave.addEventListener('click', async () => {
@@ -413,6 +437,15 @@ function openDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">Estado</div>
       <span class="card-status status-${m.estado}" style="display:inline-block;margin-bottom:6px">${m.estado || '—'}</span>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Mensaje de primer contacto</div>
+      <div class="detail-item">
+        ${m.mensaje_primer_contacto
+          ? `<div class="detail-text-block">${m.mensaje_primer_contacto}</div>`
+          : `<div class="detail-text-block" style="color:var(--text-muted);font-style:italic">${MENSAJE_BIENVENIDA_DEFAULT}</div>`}
+      </div>
     </div>
 
     <div class="detail-section">
