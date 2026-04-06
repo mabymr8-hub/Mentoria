@@ -17,7 +17,8 @@ Estoy disponible para lo que necesites, ya sea consultas académicas, orientaci�
 Maby Mereles
 Counselor — Holos Capital Counseling`;
 
-
+/* ──────────────────────────────────────────────
+   CONFIGURACIÓN SUPABASE
    → Reemplazá estos valores con los de tu proyecto
 ────────────────────────────────────────────── */
 const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
