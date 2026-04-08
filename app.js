@@ -76,7 +76,7 @@ const btnConfigReset = document.getElementById('btn-config-reset');
 // Estadísticas
 const statTotal      = document.getElementById('stat-total');
 const statActiva     = document.getElementById('stat-activa');
-const statSeguimiento= document.getElementById('stat-seguimiento');
+const statRespondio  = document.getElementById('stat-respondio');
 const statSinResp    = document.getElementById('stat-sin-resp');
 
 /* ══════════════════════════════════════════════
@@ -188,30 +188,23 @@ async function loadMentorias() {
 
 /** Aplica filtros + búsqueda y renderiza las tarjetas */
 function renderAll() {
-  // Filtrar
   let list = allMentorias.filter(m => {
-    const matchFilter = currentFilter === 'all' || m.estado === currentFilter;
     const term = searchTerm.toLowerCase();
     const matchSearch = !term ||
       (m.nombre + ' ' + m.apellido).toLowerCase().includes(term) ||
-      (m.email || '').toLowerCase().includes(term) ||
       (m.telefono || '').includes(term);
+    let matchFilter = true;
+    if (currentFilter === 'activa')       matchFilter = m.mentoria_activa === true;
+    if (currentFilter === 'respondio-si') matchFilter = m.respondio === 'Sí';
+    if (currentFilter === 'respondio-no') matchFilter = m.respondio === 'No' || !m.respondio;
     return matchFilter && matchSearch;
   });
 
-  // Limpiar tarjetas
   cardsGrid.querySelectorAll('.mentoria-card').forEach(c => c.remove());
-
-  // Actualizar stats (siempre sobre el total completo)
   updateStats();
 
-  if (list.length === 0) {
-    emptyState.classList.remove('hidden');
-    return;
-  }
+  if (list.length === 0) { emptyState.classList.remove('hidden'); return; }
   emptyState.classList.add('hidden');
-
-  // Renderizar cada tarjeta
   list.forEach(m => cardsGrid.appendChild(buildCard(m)));
 }
 
@@ -222,12 +215,12 @@ function buildCard(m) {
   card.dataset.id = m.id;
 
   const initials = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
-  const statusClass = `status-${m.estado}`;
-  const statusLabel = m.estado || '—';
+  const activa = m.mentoria_activa === true;
+  const fechaUltimo = m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : null;
 
-  // Formatear fechas legibles
-  const fechaUltimo = m.fecha_ultimo_contacto
-    ? formatDate(m.fecha_ultimo_contacto)
+  // Extracto de seguimiento (primeras 80 letras)
+  const seguimientoPreview = m.seguimiento_mentor
+    ? m.seguimiento_mentor.replace(/\n/g, ' ').slice(0, 80) + (m.seguimiento_mentor.length > 80 ? '…' : '')
     : null;
 
   card.innerHTML = `
@@ -235,9 +228,13 @@ function buildCard(m) {
       <div class="card-avatar">${initials}</div>
       <div class="card-info">
         <div class="card-name">${m.nombre} ${m.apellido}</div>
-        <div class="card-email">${m.email || m.telefono || '—'}</div>
+        <div class="card-email">${m.telefono || '—'}</div>
       </div>
-      <span class="card-status ${statusClass}">${statusLabel}</span>
+      <span class="card-badge-activa ${activa ? 'activa-si' : 'activa-no'}">
+        ${activa
+          ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
+          : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
+      </span>
     </div>
     <div class="card-meta">
       ${m.tipo_contacto ? `
@@ -256,7 +253,7 @@ function buildCard(m) {
         ${fechaUltimo}
       </span>` : ''}
     </div>
-    ${m.oficio ? `<div class="card-oficio">💼 ${m.oficio}</div>` : ''}
+    ${seguimientoPreview ? `<div class="card-seguimiento-preview">📝 ${seguimientoPreview}</div>` : ''}
   `;
 
   card.addEventListener('click', () => openDetail(m.id));
@@ -266,9 +263,9 @@ function buildCard(m) {
 /** Actualiza los números del dashboard */
 function updateStats() {
   statTotal.textContent = allMentorias.length;
-  statActiva.textContent = allMentorias.filter(m => m.estado === 'Mentoría activa').length;
-  statSeguimiento.textContent = allMentorias.filter(m => m.estado === 'Seguimiento').length;
-  statSinResp.textContent = allMentorias.filter(m => m.estado === 'Sin respuesta').length;
+  statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true).length;
+  statRespondio.textContent = allMentorias.filter(m => m.respondio === 'Sí').length;
+  statSinResp.textContent = allMentorias.filter(m => m.respondio === 'No' || !m.respondio).length;
 }
 
 /* ══════════════════════════════════════════════
@@ -327,32 +324,29 @@ function closeFormModal() {
 
 /** Limpia todos los campos del formulario */
 function clearForm() {
-  ['form-id','form-nombre','form-apellido','form-telefono','form-email',
+  ['form-id','form-nombre','form-apellido','form-telefono',
    'form-fecha-primer','form-fecha-ultimo','form-respondio','form-tipo-contacto',
-   'form-oficio','form-inquietudes','form-respuesta','form-observaciones','form-estado']
+   'form-inquietudes','form-seguimiento']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
-  document.getElementById('form-estado').value = 'Sin respuesta';
+  document.getElementById('form-activa').checked = false;
 }
 
 /** Rellena el formulario con los datos de una mentoría */
 function fillForm(m) {
-  document.getElementById('form-id').value = m.id;
-  document.getElementById('form-nombre').value = m.nombre || '';
-  document.getElementById('form-apellido').value = m.apellido || '';
-  document.getElementById('form-telefono').value = m.telefono || '';
-  document.getElementById('form-email').value = m.email || '';
-  document.getElementById('form-fecha-primer').value = m.fecha_primer_contacto || '';
-  document.getElementById('form-fecha-ultimo').value = m.fecha_ultimo_contacto || '';
-  document.getElementById('form-respondio').value = m.respondio || '';
+  document.getElementById('form-id').value            = m.id;
+  document.getElementById('form-nombre').value        = m.nombre || '';
+  document.getElementById('form-apellido').value      = m.apellido || '';
+  document.getElementById('form-telefono').value      = m.telefono || '';
+  document.getElementById('form-fecha-primer').value  = m.fecha_primer_contacto || '';
+  document.getElementById('form-fecha-ultimo').value  = m.fecha_ultimo_contacto || '';
+  document.getElementById('form-respondio').value     = m.respondio || '';
   document.getElementById('form-tipo-contacto').value = m.tipo_contacto || '';
-  document.getElementById('form-oficio').value = m.oficio || '';
-  document.getElementById('form-inquietudes').value = m.inquietudes || '';
-  document.getElementById('form-respuesta').value = m.respuesta_mentor || '';
-  document.getElementById('form-observaciones').value = m.observaciones || '';
-  document.getElementById('form-estado').value = m.estado || 'Sin respuesta';
+  document.getElementById('form-activa').checked      = m.mentoria_activa === true;
+  document.getElementById('form-inquietudes').value   = m.inquietudes || '';
+  document.getElementById('form-seguimiento').value   = m.seguimiento_mentor || '';
 }
 
 /** Lee los valores del formulario y devuelve un objeto */
@@ -361,16 +355,13 @@ function readForm() {
     nombre:               document.getElementById('form-nombre').value.trim(),
     apellido:             document.getElementById('form-apellido').value.trim(),
     telefono:             document.getElementById('form-telefono').value.trim(),
-    email:                document.getElementById('form-email').value.trim(),
     fecha_primer_contacto:document.getElementById('form-fecha-primer').value || null,
     fecha_ultimo_contacto:document.getElementById('form-fecha-ultimo').value || null,
     respondio:            document.getElementById('form-respondio').value || null,
     tipo_contacto:        document.getElementById('form-tipo-contacto').value || null,
-    oficio:               document.getElementById('form-oficio').value.trim() || null,
+    mentoria_activa:      document.getElementById('form-activa').checked,
     inquietudes:          document.getElementById('form-inquietudes').value.trim() || null,
-    respuesta_mentor:     document.getElementById('form-respuesta').value.trim() || null,
-    observaciones:        document.getElementById('form-observaciones').value.trim() || null,
-    estado:               document.getElementById('form-estado').value,
+    seguimiento_mentor:   document.getElementById('form-seguimiento').value.trim() || null,
   };
 }
 
@@ -428,21 +419,15 @@ function openDetail(id) {
   document.getElementById('detail-nombre').textContent = `${m.nombre} ${m.apellido}`;
 
   const body = document.getElementById('detail-body');
-  const val = (v) => v
-    ? `<span>${v}</span>`
-    : `<span class="empty-val">—</span>`;
+  const val = (v) => v ? `<span>${v}</span>` : `<span class="empty-val">—</span>`;
+  const activa = m.mentoria_activa === true;
 
   body.innerHTML = `
-    <div class="detail-section">
-      <div class="detail-section-title">Estado</div>
-      <span class="card-status status-${m.estado}" style="display:inline-block;margin-bottom:6px">${m.estado || '—'}</span>
-    </div>
-
     <div class="detail-section">
       <div class="detail-section-title-row">
         <span class="detail-section-title" style="margin-bottom:0;border:none">Mensaje de primer contacto</span>
         <div style="display:flex;gap:6px">
-          <button class="btn-copy-msg" id="btn-copy-msg" title="Copiar mensaje">
+          <button class="btn-copy-msg" id="btn-copy-msg">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copiar
           </button>
@@ -456,65 +441,50 @@ function openDetail(id) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
             Enviar por WhatsApp
            </button>`
-        : `<div class="btn-whatsapp-disabled">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="opacity:.4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-            Sin número de teléfono cargado
-           </div>`
+        : `<div class="btn-whatsapp-disabled">Sin número de teléfono cargado</div>`
       }
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">Datos de contacto</div>
-      <div class="detail-row">
-        <div class="detail-item"><label>Teléfono</label>${val(m.telefono)}</div>
-        <div class="detail-item"><label>Email</label>${val(m.email)}</div>
+      <div class="detail-section-title">Estado de mentoría</div>
+      <div class="detail-activa-badge ${activa ? 'activa-si' : 'activa-no'}">
+        ${activa
+          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Mentoría activa`
+          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Mentoría inactiva`}
       </div>
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">Historial de contacto</div>
+      <div class="detail-section-title">Contacto</div>
+      <div class="detail-row">
+        <div class="detail-item"><label>Teléfono</label>${val(m.telefono)}</div>
+        <div class="detail-item"><label>Respondió</label>${val(m.respondio)}</div>
+      </div>
       <div class="detail-row">
         <div class="detail-item"><label>Primer contacto</label>${val(m.fecha_primer_contacto ? formatDate(m.fecha_primer_contacto) : null)}</div>
         <div class="detail-item"><label>Último contacto</label>${val(m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : null)}</div>
       </div>
-      <div class="detail-row">
-        <div class="detail-item"><label>¿Respondió?</label>${val(m.respondio)}</div>
-        <div class="detail-item"><label>Tipo de contacto</label>${val(m.tipo_contacto)}</div>
-      </div>
+      <div class="detail-item"><label>Tipo de contacto</label>${val(m.tipo_contacto)}</div>
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">Información de la persona</div>
-      <div class="detail-item" style="margin-bottom:10px"><label>Oficio / Profesión</label>${val(m.oficio)}</div>
-      <div class="detail-item">
-        <label>Inquietudes</label>
-        ${m.inquietudes
-          ? `<div class="detail-text-block">${m.inquietudes}</div>`
-          : `<span class="empty-val">—</span>`}
-      </div>
+      <div class="detail-section-title">Inquietudes del estudiante</div>
+      ${m.inquietudes
+        ? `<div class="detail-text-block">${m.inquietudes}</div>`
+        : `<span class="empty-val">Sin registrar</span>`}
     </div>
 
     <div class="detail-section">
       <div class="detail-section-title">Seguimiento del mentor</div>
-      <div class="detail-item" style="margin-bottom:10px">
-        <label>Respuesta dada</label>
-        ${m.respuesta_mentor
-          ? `<div class="detail-text-block">${m.respuesta_mentor}</div>`
-          : `<span class="empty-val">—</span>`}
-      </div>
-      <div class="detail-item">
-        <label>Observaciones</label>
-        ${m.observaciones
-          ? `<div class="detail-text-block">${m.observaciones}</div>`
-          : `<span class="empty-val">—</span>`}
-      </div>
+      ${m.seguimiento_mentor
+        ? `<div class="detail-text-block detail-seguimiento">${m.seguimiento_mentor}</div>`
+        : `<span class="empty-val">Sin registrar</span>`}
     </div>
   `;
 
   modalDetail.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  // Botón copiar mensaje
   document.getElementById('btn-copy-msg').addEventListener('click', async () => {
     const texto = document.getElementById('detail-msg-text').innerText;
     try {
@@ -528,18 +498,13 @@ function openDetail(id) {
         btn.style.borderColor = '';
         btn.style.color = '';
       }, 2000);
-    } catch {
-      showToast('No se pudo copiar. Seleccioná el texto manualmente.');
-    }
+    } catch { showToast('No se pudo copiar.'); }
   });
 
-  // Botón WhatsApp: lee mensajeGlobal EN EL MOMENTO del click
-  // así siempre usa el mensaje actualizado, sin importar cuándo se abrió el modal
   const btnWA = document.getElementById('btn-whatsapp');
   if (btnWA) {
     btnWA.addEventListener('click', () => {
-      const phone = btnWA.dataset.phone;
-      const url = `https://wa.me/${phone}?text=${encodeForWhatsApp(mensajeGlobal)}`;
+      const url = `https://wa.me/${btnWA.dataset.phone}?text=${encodeForWhatsApp(mensajeGlobal)}`;
       window.open(url, '_blank', 'noopener');
     });
   }
