@@ -632,22 +632,41 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
   if (!allMentorias.length) { showToast('No hay datos para exportar.'); return; }
 
   const headers = [
-    'Nombre','Apellido','Teléfono','Email',
-    'Fecha 1er contacto','Respondió','Tipo de contacto',
-    'Fecha último contacto','Oficio','Inquietudes',
-    'Respuesta del mentor','Observaciones','Estado'
+    'Nombre', 'Apellido', 'Teléfono',
+    'Primer contacto', 'Respondió', 'Tipo de contacto',
+    'Último contacto', 'Mentoría activa',
+    'Inquietudes del estudiante', 'Seguimiento del mentor'
   ];
 
   const rows = allMentorias.map(m => [
-    m.nombre, m.apellido, m.telefono, m.email,
-    m.fecha_primer_contacto, m.respondio, m.tipo_contacto,
-    m.fecha_ultimo_contacto, m.oficio, m.inquietudes,
-    m.respuesta_mentor, m.observaciones, m.estado
+    m.nombre, m.apellido, m.telefono || '—',
+    m.fecha_primer_contacto ? formatDate(m.fecha_primer_contacto) : '—',
+    m.respondio || '—',
+    m.tipo_contacto || '—',
+    m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : '—',
+    m.mentoria_activa ? 'Sí' : 'No',
+    m.inquietudes || '—',
+    m.seguimiento_mentor || '—'
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  // Ancho de columnas
-  ws['!cols'] = headers.map(() => ({ wch: 20 }));
+
+  // Anchos de columna
+  ws['!cols'] = [
+    { wch: 16 }, { wch: 18 }, { wch: 16 },
+    { wch: 14 }, { wch: 10 }, { wch: 18 },
+    { wch: 14 }, { wch: 14 },
+    { wch: 40 }, { wch: 50 }
+  ];
+
+  // Wrap text en las celdas de inquietudes y seguimiento
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = 1; R <= range.e.r; R++) {
+    ['I','J'].forEach(col => {
+      const cell = ws[`${col}${R + 1}`];
+      if (cell) cell.s = { alignment: { wrapText: true, vertical: 'top' } };
+    });
+  }
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Mentorías');
@@ -655,44 +674,164 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
   showToast('Excel exportado ✓');
 });
 
-/** Exporta a PDF usando jsPDF + autotable */
+/** Exporta a PDF usando jsPDF + autotable
+ *  Formato: orientación portrait, una ficha por persona.
+ *  Cada persona tiene: datos de contacto + inquietudes + seguimiento.
+ */
 document.getElementById('btn-export-pdf').addEventListener('click', () => {
   if (!allMentorias.length) { showToast('No hay datos para exportar.'); return; }
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const PW = 210; // ancho A4
+  const ML = 14;  // margen izquierdo
+  const CW = PW - ML * 2; // ancho de contenido
 
+  // ── Paleta ──
+  const COLOR_VERDE   = [107, 154, 100];
+  const COLOR_VERDE_L = [239, 246, 238];
+  const COLOR_GRIS    = [245, 241, 235];
+  const COLOR_TEXTO   = [44,  36,  23];
+  const COLOR_MUTED   = [122, 110, 98];
+
+  // ── Título ──
+  doc.setFillColor(...COLOR_VERDE);
+  doc.rect(0, 0, PW, 22, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('Registro de Mentorías — Maby Mereles', 14, 16);
-
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Registro de Mentorías — Maby Mereles', ML, 13);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(`Exportado: ${new Date().toLocaleDateString('es-AR')}`, 14, 22);
+  doc.setFontSize(8);
+  doc.text(`Exportado: ${new Date().toLocaleDateString('es-AR')}  ·  Total: ${allMentorias.length} registros`, ML, 19);
 
-  const columns = [
-    'Nombre','Apellido','Teléfono','Email',
-    'Primer contacto','Respondió','Tipo contacto',
-    'Último contacto','Oficio','Estado'
-  ];
+  let y = 30; // cursor vertical
 
-  const rows = allMentorias.map(m => [
-    m.nombre, m.apellido, m.telefono || '—', m.email || '—',
-    m.fecha_primer_contacto ? formatDate(m.fecha_primer_contacto) : '—',
-    m.respondio || '—', m.tipo_contacto || '—',
-    m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : '—',
-    m.oficio || '—', m.estado
-  ]);
+  allMentorias.forEach((m, idx) => {
+    const activa = m.mentoria_activa === true;
 
-  doc.autoTable({
-    head: [columns],
-    body: rows,
-    startY: 28,
-    styles: { fontSize: 7.5, cellPadding: 2.5 },
-    headStyles: { fillColor: [107, 154, 100], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [245, 241, 235] },
-    columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 22 } },
+    // Estimamos altura mínima de esta ficha para ver si cabe en la página
+    // Si no cabe, agregamos página nueva
+    if (y > 240) {
+      doc.addPage();
+      y = 16;
+    }
+
+    // ── Cabecera de persona ──
+    doc.setFillColor(...COLOR_VERDE);
+    doc.roundedRect(ML, y, CW, 9, 1.5, 1.5, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`${m.nombre} ${m.apellido}`.toUpperCase(), ML + 3, y + 6.2);
+
+    // Badge mentoría activa
+    const badgeLabel = activa ? '● ACTIVA' : '○ INACTIVA';
+    doc.setFontSize(7.5);
+    doc.text(badgeLabel, ML + CW - 3, y + 6.2, { align: 'right' });
+
+    y += 11;
+
+    // ── Fila de datos de contacto ──
+    doc.setFillColor(...COLOR_GRIS);
+    doc.rect(ML, y, CW, 8, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...COLOR_MUTED);
+
+    const col1 = ML + 2;
+    const col2 = ML + 45;
+    const col3 = ML + 90;
+    const col4 = ML + 130;
+
+    doc.text('TELÉFONO', col1, y + 3);
+    doc.text('PRIMER CONTACTO', col2, y + 3);
+    doc.text('ÚLTIMO CONTACTO', col3, y + 3);
+    doc.text('RESPONDIÓ / TIPO', col4, y + 3);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLOR_TEXTO);
+
+    doc.text(m.telefono || '—', col1, y + 7);
+    doc.text(m.fecha_primer_contacto ? formatDate(m.fecha_primer_contacto) : '—', col2, y + 7);
+    doc.text(m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : '—', col3, y + 7);
+
+    const respTipo = [m.respondio, m.tipo_contacto].filter(Boolean).join(' · ') || '—';
+    doc.text(respTipo, col4, y + 7);
+
+    y += 10;
+
+    // ── Sección Inquietudes ──
+    const inquietudes = m.inquietudes || '—';
+    const inquLines = doc.splitTextToSize(inquietudes, CW - 6);
+    const inquH = Math.max(10, inquLines.length * 4.2 + 7);
+
+    // Verificar salto de página
+    if (y + inquH + 30 > 285) { doc.addPage(); y = 16; }
+
+    doc.setFillColor(...COLOR_VERDE_L);
+    doc.rect(ML, y, CW, inquH, 'F');
+    // Borde izquierdo verde
+    doc.setFillColor(...COLOR_VERDE);
+    doc.rect(ML, y, 2.5, inquH, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...COLOR_VERDE);
+    doc.text('INQUIETUDES DEL ESTUDIANTE', ML + 5, y + 4.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...COLOR_TEXTO);
+    doc.text(inquLines, ML + 5, y + 8.5);
+
+    y += inquH + 2;
+
+    // ── Sección Seguimiento ──
+    const seguimiento = m.seguimiento_mentor || '—';
+    const segLines = doc.splitTextToSize(seguimiento, CW - 6);
+    const segH = Math.max(10, segLines.length * 4.2 + 7);
+
+    // Verificar salto de página
+    if (y + segH > 285) { doc.addPage(); y = 16; }
+
+    doc.setFillColor(250, 247, 242);
+    doc.rect(ML, y, CW, segH, 'F');
+    doc.setFillColor(...COLOR_MUTED);
+    doc.rect(ML, y, 2.5, segH, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...COLOR_MUTED);
+    doc.text('SEGUIMIENTO DEL MENTOR', ML + 5, y + 4.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...COLOR_TEXTO);
+    doc.text(segLines, ML + 5, y + 8.5);
+
+    y += segH + 6; // espacio entre personas
+
+    // Línea separadora (excepto la última)
+    if (idx < allMentorias.length - 1) {
+      doc.setDrawColor(232, 226, 217);
+      doc.setLineWidth(0.3);
+      doc.line(ML, y - 3, ML + CW, y - 3);
+    }
   });
+
+  // ── Pie de página en cada página ──
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...COLOR_MUTED);
+    doc.text(`Maby Mereles · Counselor — Holos Capital Counseling`, ML, 293);
+    doc.text(`Página ${i} / ${totalPages}`, PW - ML, 293, { align: 'right' });
+  }
 
   doc.save(`Mentorias_${today()}.pdf`);
   showToast('PDF exportado ✓');
