@@ -218,9 +218,10 @@ function buildCard(m) {
   const activa = m.mentoria_activa === true;
   const fechaUltimo = m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : null;
 
-  // Extracto de seguimiento (primeras 80 letras)
-  const seguimientoPreview = m.seguimiento_mentor
-    ? m.seguimiento_mentor.replace(/\n/g, ' ').slice(0, 80) + (m.seguimiento_mentor.length > 80 ? '…' : '')
+  // Preview de seguimiento: primeras 100 letras, limpiando saltos de línea
+  const seg = (m.seguimiento_mentor || '').trim();
+  const seguimientoPreview = seg.length > 0
+    ? seg.replace(/\n+/g, ' · ').slice(0, 100) + (seg.length > 100 ? '…' : '')
     : null;
 
   card.innerHTML = `
@@ -253,7 +254,7 @@ function buildCard(m) {
         ${fechaUltimo}
       </span>` : ''}
     </div>
-    ${seguimientoPreview ? `<div class="card-seguimiento-preview">📝 ${seguimientoPreview}</div>` : ''}
+    ${seguimientoPreview ? `<div class="card-seguimiento-preview">${seguimientoPreview}</div>` : ''}
   `;
 
   card.addEventListener('click', () => openDetail(m.id));
@@ -725,10 +726,17 @@ document.getElementById('btn-export-pdf').addEventListener('click', () => {
     doc.setTextColor(255, 255, 255);
     doc.text(`${m.nombre} ${m.apellido}`.toUpperCase(), ML + 3, y + 6.2);
 
-    // Badge mentoría activa
-    const badgeLabel = activa ? '● ACTIVA' : '○ INACTIVA';
-    doc.setFontSize(7.5);
-    doc.text(badgeLabel, ML + CW - 3, y + 6.2, { align: 'right' });
+    // Badge mentoría activa — sin caracteres especiales para evitar encoding issues
+    const badgeLabel = activa ? 'ACTIVA' : 'INACTIVA';
+    const badgeColor = activa ? [144, 196, 138] : [180, 170, 160];
+    const badgeW = activa ? 16 : 20;
+    const badgeX = ML + CW - badgeW - 2;
+    doc.setFillColor(...badgeColor);
+    doc.roundedRect(badgeX, y + 1.5, badgeW, 6, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(badgeLabel, badgeX + badgeW / 2, y + 5.8, { align: 'center' });
 
     y += 11;
 
