@@ -167,7 +167,7 @@ async function loadMentorias() {
 
   const { data, error } = await db
     .from('mentorias')
-    .select('*')
+    .select('id, created_at, nombre, apellido, telefono, fecha_primer_contacto, respondio, tipo_contacto, fecha_ultimo_contacto, mentoria_activa, inquietudes, seguimiento_mentor')
     .order('created_at', { ascending: false });
 
   loadingState.classList.add('hidden');
@@ -470,15 +470,15 @@ function openDetail(id) {
 
     <div class="detail-section">
       <div class="detail-section-title">Inquietudes del estudiante</div>
-      ${m.inquietudes
-        ? `<div class="detail-text-block">${m.inquietudes}</div>`
+      ${(m.inquietudes || '').trim()
+        ? `<div class="detail-text-block">${m.inquietudes.trim()}</div>`
         : `<span class="empty-val">Sin registrar</span>`}
     </div>
 
     <div class="detail-section">
       <div class="detail-section-title">Seguimiento del mentor</div>
-      ${m.seguimiento_mentor
-        ? `<div class="detail-text-block detail-seguimiento">${m.seguimiento_mentor}</div>`
+      ${(m.seguimiento_mentor || '').trim()
+        ? `<div class="detail-text-block detail-seguimiento">${m.seguimiento_mentor.trim()}</div>`
         : `<span class="empty-val">Sin registrar</span>`}
     </div>
   `;
