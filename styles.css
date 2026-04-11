@@ -888,6 +888,83 @@ body {
   font-style: italic;
 }
 
+/* ── Backup / Restore en configuración ── */
+.config-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0 16px;
+}
+
+.config-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-backup {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-family: var(--font-body);
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+.btn-backup:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.btn-backup-import {
+  border-style: dashed;
+}
+.btn-backup-import:hover {
+  border-color: #7C5ABF;
+  color: #7C5ABF;
+  background: #F5F0FF;
+}
+
+.import-status {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: .83rem;
+  font-weight: 500;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+.import-status.import-ok {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+.import-status.import-error {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
 /* ── Botón copiar mensaje en detalle ── */
 .detail-section-title-row {
   display: flex;

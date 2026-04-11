@@ -625,6 +625,122 @@ configSave.addEventListener('click', async () => {
 });
 
 /* ══════════════════════════════════════════════
+   BACKUP / RESTORE JSON
+══════════════════════════════════════════════ */
+
+/** Exporta todos los registros como archivo JSON */
+document.getElementById('btn-export-json').addEventListener('click', async () => {
+  // Traer siempre los datos más frescos desde Supabase
+  const { data, error } = await db
+    .from('mentorias')
+    .select('id, created_at, nombre, apellido, telefono, fecha_primer_contacto, respondio, tipo_contacto, fecha_ultimo_contacto, mentoria_activa, inquietudes, seguimiento_mentor')
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('Error al obtener datos para backup.'); return; }
+  if (!data.length) { showToast('No hay datos para exportar.'); return; }
+
+  const backup = {
+    version: '1.0',
+    exportado: new Date().toISOString(),
+    total: data.length,
+    mentorias: data
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `MentoriasBackup_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✓ Backup exportado (${data.length} registros)`);
+});
+
+/** Importa registros desde un archivo JSON exportado previamente */
+document.getElementById('input-import-json').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const importStatus = document.getElementById('import-status');
+  importStatus.className = 'import-status';
+  importStatus.textContent = 'Leyendo archivo...';
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    let backup;
+
+    // Parsear JSON
+    try {
+      backup = JSON.parse(ev.target.result);
+    } catch {
+      importStatus.className = 'import-status import-error';
+      importStatus.textContent = '❌ El archivo no es un JSON válido.';
+      return;
+    }
+
+    // Validar estructura
+    if (!backup.mentorias || !Array.isArray(backup.mentorias)) {
+      importStatus.className = 'import-status import-error';
+      importStatus.textContent = '❌ El JSON no tiene el formato correcto de backup.';
+      return;
+    }
+
+    const total = backup.mentorias.length;
+    importStatus.textContent = `Importando ${total} registros...`;
+
+    // Confirmar con el usuario
+    const confirmar = confirm(
+      `¿Importar ${total} registros desde "${file.name}"?\n\n` +
+      `⚠️ Los registros con el mismo ID se actualizarán. Los nuevos se agregarán. No se elimina nada.`
+    );
+    if (!confirmar) {
+      importStatus.className = 'import-status import-error';
+      importStatus.textContent = 'Importación cancelada.';
+      e.target.value = '';
+      return;
+    }
+
+    // Preparar registros: limpiar campos que Supabase maneja solo
+    const registros = backup.mentorias.map(m => ({
+      id:                    m.id,
+      nombre:                m.nombre,
+      apellido:              m.apellido,
+      telefono:              m.telefono || null,
+      fecha_primer_contacto: m.fecha_primer_contacto || null,
+      respondio:             m.respondio || null,
+      tipo_contacto:         m.tipo_contacto || null,
+      fecha_ultimo_contacto: m.fecha_ultimo_contacto || null,
+      mentoria_activa:       m.mentoria_activa === true,
+      inquietudes:           m.inquietudes || null,
+      seguimiento_mentor:    m.seguimiento_mentor || null,
+    }));
+
+    // Upsert — inserta nuevos y actualiza existentes por ID
+    const { error } = await db
+      .from('mentorias')
+      .upsert(registros, { onConflict: 'id' });
+
+    if (error) {
+      importStatus.className = 'import-status import-error';
+      importStatus.textContent = `❌ Error al importar: ${error.message}`;
+      console.error(error);
+      e.target.value = '';
+      return;
+    }
+
+    importStatus.className = 'import-status import-ok';
+    importStatus.textContent = `✓ ${total} registros importados correctamente.`;
+    e.target.value = '';
+
+    // Recargar los datos en la app
+    await loadMentorias();
+    showToast(`✓ Backup restaurado — ${total} registros`);
+  };
+
+  reader.readAsText(file);
+});
+
+/* ══════════════════════════════════════════════
    EXPORTACIÓN
 ══════════════════════════════════════════════ */
 
