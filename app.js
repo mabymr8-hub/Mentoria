@@ -31,12 +31,16 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* ──────────────────────────────────────────────
    ESTADO GLOBAL
 ────────────────────────────────────────────── */
-let allMentorias = [];       // Todos los registros cargados
-let currentFilter = 'all';   // Filtro activo
-let searchTerm = '';         // Término de búsqueda
-let editingId = null;        // ID del registro en edición
-let currentDetailId = null;  // ID del registro en vista detalle
-let mensajeGlobal = MENSAJE_BIENVENIDA_DEFAULT; // Mensaje global editable
+let allMentorias = [];
+let currentFilter = 'all';
+let searchTerm    = '';
+let editingId     = null;
+let currentDetailId = null;
+let mensajeGlobal = MENSAJE_BIENVENIDA_DEFAULT;
+let currentSort   = 'reciente';   // orden activo
+let compactView   = false;        // vista compacta
+// Caché offline en localStorage
+const CACHE_KEY   = 'maby_mentorias_cache';
 
 /* ──────────────────────────────────────────────
    ELEMENTOS DEL DOM
@@ -64,6 +68,8 @@ const emptyState     = document.getElementById('empty-state');
 const searchInput    = document.getElementById('search-input');
 const filterChips    = document.querySelectorAll('.chip');
 const toast          = document.getElementById('toast');
+const sortSelect     = document.getElementById('sort-select');
+const btnViewToggle  = document.getElementById('btn-view-toggle');
 // Modal configuración mensaje global
 const btnConfig      = document.getElementById('btn-config');
 const modalConfig    = document.getElementById('modal-config');
@@ -72,12 +78,18 @@ const configCancel   = document.getElementById('config-cancel');
 const configSave     = document.getElementById('config-save');
 const configMensaje  = document.getElementById('config-mensaje');
 const btnConfigReset = document.getElementById('btn-config-reset');
+// Modal seguimiento rápido
+const modalSeg       = document.getElementById('modal-seguimiento');
+const segClose       = document.getElementById('seg-close');
+const segCancel      = document.getElementById('seg-cancel');
+const segSave        = document.getElementById('seg-save');
+const segNota        = document.getElementById('seg-nota');
 
 // Estadísticas
 const statTotal      = document.getElementById('stat-total');
 const statActiva     = document.getElementById('stat-activa');
-const statRespondio  = document.getElementById('stat-respondio');
-const statSinResp    = document.getElementById('stat-sin-resp');
+const statAlerta     = document.getElementById('stat-alerta');
+const statCierre     = document.getElementById('stat-cierre');
 
 /* ══════════════════════════════════════════════
    AUTENTICACIÓN
@@ -156,14 +168,20 @@ function showApp() {
    CARGA DE DATOS
 ══════════════════════════════════════════════ */
 
-/** Carga todas las mentorías de la BD */
+/** Carga todas las mentorías de la BD con caché offline */
 async function loadMentorias() {
   loadingState.classList.remove('hidden');
   emptyState.classList.add('hidden');
+  cardsGrid.querySelectorAll('.mentoria-card').forEach(c => c.remove());
 
-  // Limpiamos tarjetas anteriores (sin los estados)
-  const oldCards = cardsGrid.querySelectorAll('.mentoria-card');
-  oldCards.forEach(c => c.remove());
+  // Mostrar caché mientras carga (modo offline-first)
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      allMentorias = JSON.parse(cached);
+      renderAll();
+    } catch {}
+  }
 
   const { data, error } = await db
     .from('mentorias')
@@ -173,63 +191,129 @@ async function loadMentorias() {
   loadingState.classList.add('hidden');
 
   if (error) {
-    showToast('Error al cargar datos.');
+    if (!cached) showToast('Sin conexión — mostrando datos guardados localmente.');
     console.error(error);
     return;
   }
 
   allMentorias = data || [];
+  // Guardar en caché local
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(allMentorias)); } catch {}
   renderAll();
+}
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+
+/** Días entre una fecha ISO y hoy */
+function diasDesde(isoDate) {
+  if (!isoDate) return null;
+  const diff = Date.now() - new Date(isoDate).getTime();
+  return Math.floor(diff / 86400000);
+}
+
+/** Etapa del proceso según días desde primer contacto y estado activo */
+function getEtapa(m) {
+  const dias = diasDesde(m.fecha_primer_contacto);
+  if (dias === null) return null;
+  if (dias <= 7)  return { label: 'Presentación',        color: '#A8C5E8', dias };
+  if (dias <= 14) return { label: 'Videollamada pendiente', color: '#C5A8E8', dias };
+  if (dias <= 60) return { label: 'En proceso',           color: '#8FAF8A', dias };
+  return           { label: 'Cierre final',               color: '#C4825A', dias };
+}
+
+/** Tiene alerta: más de 14 días sin contacto */
+function tieneAlerta(m) {
+  const dias = diasDesde(m.fecha_ultimo_contacto || m.fecha_primer_contacto);
+  return dias !== null && dias > 14;
+}
+
+/** Está en etapa cierre (más de 60 días) */
+function esCierre(m) {
+  return diasDesde(m.fecha_primer_contacto) > 60;
 }
 
 /* ══════════════════════════════════════════════
    RENDERIZADO
 ══════════════════════════════════════════════ */
 
-/** Aplica filtros + búsqueda y renderiza las tarjetas */
+/** Aplica filtros + búsqueda + orden y renderiza */
 function renderAll() {
+  // 1. Filtrar
   let list = allMentorias.filter(m => {
     const term = searchTerm.toLowerCase();
     const matchSearch = !term ||
       (m.nombre + ' ' + m.apellido).toLowerCase().includes(term) ||
-      (m.telefono || '').includes(term);
+      (m.telefono || '').includes(term) ||
+      (m.inquietudes || '').toLowerCase().includes(term) ||
+      (m.seguimiento_mentor || '').toLowerCase().includes(term);
+
     let matchFilter = true;
     if (currentFilter === 'activa')       matchFilter = m.mentoria_activa === true;
     if (currentFilter === 'respondio-si') matchFilter = m.respondio === 'Sí';
     if (currentFilter === 'respondio-no') matchFilter = m.respondio === 'No' || !m.respondio;
+    if (currentFilter === 'alerta')       matchFilter = tieneAlerta(m);
+    if (currentFilter === 'cierre')       matchFilter = esCierre(m);
+
     return matchFilter && matchSearch;
   });
 
-  cardsGrid.querySelectorAll('.mentoria-card').forEach(c => c.remove());
+  // 2. Ordenar
+  list = sortList(list);
+
+  cardsGrid.querySelectorAll('.mentoria-card, .mentoria-row').forEach(c => c.remove());
   updateStats();
 
   if (list.length === 0) { emptyState.classList.remove('hidden'); return; }
   emptyState.classList.add('hidden');
-  list.forEach(m => cardsGrid.appendChild(buildCard(m)));
+
+  // 3. Renderizar según vista
+  list.forEach(m => cardsGrid.appendChild(compactView ? buildRow(m) : buildCard(m)));
 }
 
-/** Construye el elemento DOM de una tarjeta */
+/** Ordena la lista según currentSort */
+function sortList(list) {
+  return [...list].sort((a, b) => {
+    switch (currentSort) {
+      case 'nombre':
+        return (a.nombre + a.apellido).localeCompare(b.nombre + b.apellido);
+      case 'ultimo':
+        return (b.fecha_ultimo_contacto || '').localeCompare(a.fecha_ultimo_contacto || '');
+      case 'dias':
+        return (diasDesde(a.fecha_primer_contacto) || 0) > (diasDesde(b.fecha_primer_contacto) || 0) ? -1 : 1;
+      case 'activa':
+        return (b.mentoria_activa === true ? 1 : 0) - (a.mentoria_activa === true ? 1 : 0);
+      default: // reciente
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  });
+}
+
+/** Tarjeta completa (vista normal) */
 function buildCard(m) {
   const card = document.createElement('div');
   card.className = 'mentoria-card';
   card.dataset.id = m.id;
 
-  const initials = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
-  const activa = m.mentoria_activa === true;
-  const fechaUltimo = m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : null;
-
-  // Preview de seguimiento: primeras 100 letras, limpiando saltos de línea
+  const initials  = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
+  const activa    = m.mentoria_activa === true;
+  const alerta    = tieneAlerta(m);
+  const etapa     = getEtapa(m);
+  const diasUltimo = diasDesde(m.fecha_ultimo_contacto);
   const seg = (m.seguimiento_mentor || '').trim();
   const seguimientoPreview = seg.length > 0
     ? seg.replace(/\n+/g, ' · ').slice(0, 100) + (seg.length > 100 ? '…' : '')
     : null;
 
   card.innerHTML = `
+    ${alerta ? `<div class="card-alerta-banner">⚠️ Sin contacto hace ${diasUltimo} días</div>` : ''}
     <div class="card-top">
-      <div class="card-avatar">${initials}</div>
+      <div class="card-avatar" style="${etapa ? `background:linear-gradient(135deg,${etapa.color},${etapa.color}99)` : ''}">${initials}</div>
       <div class="card-info">
         <div class="card-name">${m.nombre} ${m.apellido}</div>
         <div class="card-email">${m.telefono || '—'}</div>
+        ${etapa ? `<div class="card-etapa" style="color:${etapa.color === '#8FAF8A' ? 'var(--accent-dark)' : etapa.color}">${etapa.label} · ${etapa.dias}d</div>` : ''}
       </div>
       <span class="card-badge-activa ${activa ? 'activa-si' : 'activa-no'}">
         ${activa
@@ -238,35 +322,63 @@ function buildCard(m) {
       </span>
     </div>
     <div class="card-meta">
-      ${m.tipo_contacto ? `
-      <span class="card-meta-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-1.91a2 2 0 0 1 2.11-.45c.9.374 1.852.63 2.82.7A2 2 0 0 1 21.5 15.09v3-.17z"/></svg>
-        ${m.tipo_contacto}
-      </span>` : ''}
-      ${m.respondio ? `
-      <span class="card-meta-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
-        Respondió: ${m.respondio}
-      </span>` : ''}
-      ${fechaUltimo ? `
-      <span class="card-meta-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        ${fechaUltimo}
-      </span>` : ''}
+      ${m.tipo_contacto ? `<span class="card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-1.91a2 2 0 0 1 2.11-.45c.9.374 1.852.63 2.82.7A2 2 0 0 1 21.5 15.09v3-.17z"/></svg>${m.tipo_contacto}</span>` : ''}
+      ${m.respondio ? `<span class="card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>Respondió: ${m.respondio}</span>` : ''}
+      ${m.fecha_ultimo_contacto ? `<span class="card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${formatDate(m.fecha_ultimo_contacto)}</span>` : ''}
     </div>
     ${seguimientoPreview ? `<div class="card-seguimiento-preview">${seguimientoPreview}</div>` : ''}
+    <button class="btn-contactar-hoy" data-id="${m.id}" title="Registrar contacto hoy">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-1.91a2 2 0 0 1 2.11-.45c.9.374 1.852.63 2.82.7A2 2 0 0 1 21.5 15.09z"/></svg>
+      Contactar hoy
+    </button>
   `;
+
+  // Botón "Contactar hoy" — no propagar el click a la tarjeta
+  card.querySelector('.btn-contactar-hoy').addEventListener('click', e => {
+    e.stopPropagation();
+    abrirModalSeguimiento(m.id);
+  });
 
   card.addEventListener('click', () => openDetail(m.id));
   return card;
 }
 
+/** Fila compacta (vista lista) */
+function buildRow(m) {
+  const row = document.createElement('div');
+  row.className = 'mentoria-row';
+  row.dataset.id = m.id;
+
+  const activa  = m.mentoria_activa === true;
+  const alerta  = tieneAlerta(m);
+  const etapa   = getEtapa(m);
+
+  row.innerHTML = `
+    <div class="row-dot ${activa ? 'activa-si' : 'activa-no'}"></div>
+    <div class="row-nombre">
+      ${alerta ? '<span class="row-alerta-dot" title="Sin contacto reciente"></span>' : ''}
+      ${m.nombre} ${m.apellido}
+    </div>
+    <div class="row-tel">${m.telefono || '—'}</div>
+    <div class="row-etapa">${etapa ? etapa.label : '—'}</div>
+    <div class="row-fecha">${m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : '—'}</div>
+    <button class="btn-contactar-hoy row-btn" data-id="${m.id}">Hoy</button>
+  `;
+
+  row.querySelector('.btn-contactar-hoy').addEventListener('click', e => {
+    e.stopPropagation();
+    abrirModalSeguimiento(m.id);
+  });
+  row.addEventListener('click', () => openDetail(m.id));
+  return row;
+}
+
 /** Actualiza los números del dashboard */
 function updateStats() {
-  statTotal.textContent = allMentorias.length;
+  statTotal.textContent  = allMentorias.length;
   statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true).length;
-  statRespondio.textContent = allMentorias.filter(m => m.respondio === 'Sí').length;
-  statSinResp.textContent = allMentorias.filter(m => m.respondio === 'No' || !m.respondio).length;
+  statAlerta.textContent = allMentorias.filter(tieneAlerta).length;
+  statCierre.textContent = allMentorias.filter(esCierre).length;
 }
 
 /* ══════════════════════════════════════════════
@@ -284,6 +396,94 @@ filterChips.forEach(chip => {
 searchInput.addEventListener('input', e => {
   searchTerm = e.target.value;
   renderAll();
+});
+
+/** Orden */
+sortSelect.addEventListener('change', e => {
+  currentSort = e.target.value;
+  renderAll();
+});
+
+/** Toggle vista compacta / tarjetas */
+btnViewToggle.addEventListener('click', () => {
+  compactView = !compactView;
+  document.getElementById('icon-view-cards').style.display = compactView ? 'none'  : 'block';
+  document.getElementById('icon-view-list').style.display  = compactView ? 'block' : 'none';
+  cardsGrid.classList.toggle('compact-view', compactView);
+  renderAll();
+});
+
+/* ══════════════════════════════════════════════
+   MODAL SEGUIMIENTO RÁPIDO
+══════════════════════════════════════════════ */
+
+let segTargetId = null;
+
+function abrirModalSeguimiento(id) {
+  segTargetId = id;
+  const m = allMentorias.find(x => x.id === id);
+  segNota.value = '';
+  segNota.placeholder = `Nota de seguimiento para ${m ? m.nombre : ''}...`;
+  modalSeg.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => segNota.focus(), 100);
+}
+
+[segClose, segCancel].forEach(el => {
+  el.addEventListener('click', () => {
+    modalSeg.classList.add('hidden');
+    document.body.style.overflow = '';
+    segTargetId = null;
+  });
+});
+
+modalSeg.addEventListener('click', e => {
+  if (e.target === modalSeg) {
+    modalSeg.classList.add('hidden');
+    document.body.style.overflow = '';
+    segTargetId = null;
+  }
+});
+
+segSave.addEventListener('click', async () => {
+  const nota = segNota.value.trim();
+  if (!nota) { showToast('Escribí una nota antes de guardar.'); return; }
+
+  const m = allMentorias.find(x => x.id === segTargetId);
+  if (!m) return;
+
+  // Construir nueva entrada con fecha/hora automática
+  const ahora = new Date();
+  const fechaStr = `${ahora.getDate().toString().padStart(2,'0')}/${(ahora.getMonth()+1).toString().padStart(2,'0')}/${ahora.getFullYear()} ${ahora.getHours().toString().padStart(2,'0')}:${ahora.getMinutes().toString().padStart(2,'0')}`;
+  const nuevaEntrada = `[${fechaStr}] ${nota}`;
+
+  // Acumular sobre el historial existente
+  const historialActual = (m.seguimiento_mentor || '').trim();
+  const nuevoHistorial = historialActual
+    ? `${nuevaEntrada}\n\n${historialActual}`
+    : nuevaEntrada;
+
+  segSave.textContent = 'Guardando...';
+  segSave.disabled = true;
+
+  const { error } = await db
+    .from('mentorias')
+    .update({
+      seguimiento_mentor: nuevoHistorial,
+      fecha_ultimo_contacto: ahora.toISOString().slice(0, 10)
+    })
+    .eq('id', segTargetId);
+
+  segSave.textContent = 'Guardar nota';
+  segSave.disabled = false;
+
+  if (error) { showToast('Error al guardar.'); console.error(error); return; }
+
+  modalSeg.classList.add('hidden');
+  document.body.style.overflow = '';
+  segTargetId = null;
+  showToast('✓ Nota y fecha de contacto actualizadas');
+  await loadMentorias();
 });
 
 /* ══════════════════════════════════════════════

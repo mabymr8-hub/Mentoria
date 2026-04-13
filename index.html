@@ -79,7 +79,7 @@
     <!-- DASHBOARD -->
     <main class="app-main">
 
-      <!-- Stats -->
+      <!-- Stats enriquecidas -->
       <section class="stats-row" id="stats-row">
         <div class="stat-card">
           <span class="stat-num" id="stat-total">0</span>
@@ -89,13 +89,13 @@
           <span class="stat-num" id="stat-activa">0</span>
           <span class="stat-label">Activas</span>
         </div>
-        <div class="stat-card stat-no-resp">
-          <span class="stat-num" id="stat-respondio">0</span>
-          <span class="stat-label">Respondieron</span>
+        <div class="stat-card stat-warn">
+          <span class="stat-num" id="stat-alerta">0</span>
+          <span class="stat-label">Sin contacto</span>
         </div>
-        <div class="stat-card stat-follow">
-          <span class="stat-num" id="stat-sin-resp">0</span>
-          <span class="stat-label">Sin resp.</span>
+        <div class="stat-card stat-cierre">
+          <span class="stat-num" id="stat-cierre">0</span>
+          <span class="stat-label">Cierre</span>
         </div>
       </section>
 
@@ -104,6 +104,8 @@
         <div class="filter-chips" id="filter-chips">
           <button class="chip active" data-filter="all">Todos</button>
           <button class="chip" data-filter="activa">Activas</button>
+          <button class="chip" data-filter="alerta">Sin contacto</button>
+          <button class="chip" data-filter="cierre">Cierre</button>
           <button class="chip" data-filter="respondio-si">Respondió</button>
           <button class="chip" data-filter="respondio-no">Sin resp.</button>
         </div>
@@ -113,10 +115,27 @@
         </button>
       </section>
 
-      <!-- Búsqueda -->
-      <div class="search-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="search-input" placeholder="Buscar por nombre, email..." />
+      <!-- Búsqueda + controles de vista/orden -->
+      <div class="search-controls-row">
+        <div class="search-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Buscar nombre, teléfono, inquietudes..." />
+        </div>
+        <div class="view-controls">
+          <!-- Orden -->
+          <select id="sort-select" class="sort-select" title="Ordenar por">
+            <option value="reciente">Más reciente</option>
+            <option value="nombre">Nombre A-Z</option>
+            <option value="ultimo">Último contacto</option>
+            <option value="dias">Más días en proceso</option>
+            <option value="activa">Activas primero</option>
+          </select>
+          <!-- Toggle vista -->
+          <button class="btn-view-toggle" id="btn-view-toggle" title="Cambiar vista">
+            <svg id="icon-view-cards" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <svg id="icon-view-list" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- Lista de tarjetas -->
@@ -290,6 +309,31 @@
       <div class="modal-footer">
         <button class="btn-secondary" id="config-cancel">Cancelar</button>
         <button class="btn-primary" id="config-save">Guardar mensaje</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL: NUEVA ENTRADA DE SEGUIMIENTO
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-seguimiento">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Agregar nota de seguimiento</h2>
+        <button class="btn-icon" id="seg-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="msg-hint" style="margin-bottom:12px">La nota se agregará con fecha y hora automática al historial de seguimiento.</p>
+        <div class="form-group">
+          <label>Nota</label>
+          <textarea id="seg-nota" rows="5" placeholder="¿Qué pasó hoy? Intervención, respuesta, observación..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="seg-cancel">Cancelar</button>
+        <button class="btn-primary" id="seg-save">Guardar nota</button>
       </div>
     </div>
   </div>

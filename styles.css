@@ -722,6 +722,175 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Stats nuevas ── */
+.stat-warn .stat-num  { color: #C4825A; }
+.stat-cierre .stat-num { color: #7C5ABF; }
+
+/* ── Search + controles fila ── */
+.search-controls-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-controls-row .search-wrap {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.view-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sort-select {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  max-width: 130px;
+}
+.sort-select:focus { border-color: var(--border-focus); }
+
+.btn-view-toggle {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  transition: all var(--transition);
+}
+.btn-view-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Alerta banner en tarjeta ── */
+.card-alerta-banner {
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  margin: -18px -18px 12px -18px;
+  border-bottom: 1px solid #FDE68A;
+}
+
+/* ── Etapa en tarjeta ── */
+.card-etapa {
+  font-size: .72rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── Botón contactar hoy en tarjeta ── */
+.btn-contactar-hoy {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-family: var(--font-body);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  width: fit-content;
+}
+.btn-contactar-hoy:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* ── Vista compacta (lista) ── */
+.cards-grid.compact-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mentoria-row {
+  display: grid;
+  grid-template-columns: 10px 1fr 110px 120px 80px 52px;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: .85rem;
+}
+.mentoria-row:hover { background: var(--bg-input); }
+
+.row-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.row-dot.activa-si { background: var(--accent); }
+.row-dot.activa-no { background: var(--border); }
+
+.row-nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.row-alerta-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #C4825A;
+  flex-shrink: 0;
+}
+
+.row-tel, .row-etapa, .row-fecha {
+  font-size: .78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-btn {
+  background: var(--accent-light);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.row-btn:hover { background: var(--accent); color: #fff; }
+
 /* ── Switch mentoría activa ── */
 .switch-row {
   display: flex;
