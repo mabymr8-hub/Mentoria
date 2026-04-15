@@ -290,16 +290,75 @@ function sortList(list) {
   });
 }
 
+/** Devuelve el SVG del ícono de crecimiento según el nivel del proceso */
+function getIconoCrecimiento(m) {
+  // Nivel 3 — Árbol: tuvo videollamada
+  if (m.tipo_contacto === 'Videollamada') {
+    return `<div class="crecimiento-icon nivel-3" title="Videollamada realizada">
+      <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- tronco -->
+        <rect x="17" y="34" width="6" height="18" rx="2" fill="#8B6340"/>
+        <!-- copa inferior -->
+        <ellipse cx="20" cy="34" rx="13" ry="10" fill="#4A8F3F"/>
+        <!-- copa media -->
+        <ellipse cx="20" cy="24" rx="10" ry="8" fill="#5AA64D"/>
+        <!-- copa superior -->
+        <ellipse cx="20" cy="16" rx="7" ry="7" fill="#6BBF5E"/>
+        <!-- brillo -->
+        <ellipse cx="17" cy="13" rx="2.5" ry="2" fill="#8FD97F" opacity=".6"/>
+      </svg>
+    </div>`;
+  }
+  // Nivel 2 — Tallo con hojas: respondió
+  if (m.respondio === 'Sí') {
+    return `<div class="crecimiento-icon nivel-2" title="El estudiante respondió">
+      <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- tallo -->
+        <path d="M20 52 Q20 30 20 18" stroke="#6B9A64" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- hoja izquierda -->
+        <path d="M20 32 Q10 26 11 18 Q18 22 20 32Z" fill="#8FBF84"/>
+        <!-- hoja derecha -->
+        <path d="M20 26 Q30 20 29 12 Q22 16 20 26Z" fill="#6B9A64"/>
+        <!-- brote -->
+        <circle cx="20" cy="16" r="3.5" fill="#A8D49E"/>
+      </svg>
+    </div>`;
+  }
+  // Nivel 1 — Semilla: solo primer contacto enviado
+  if (m.fecha_primer_contacto) {
+    return `<div class="crecimiento-icon nivel-1" title="Primer contacto enviado">
+      <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- tierra -->
+        <ellipse cx="20" cy="46" rx="10" ry="4" fill="#C4A882" opacity=".5"/>
+        <!-- semilla -->
+        <ellipse cx="20" cy="38" rx="7" ry="9" fill="#8B6340"/>
+        <!-- línea semilla -->
+        <path d="M20 30 Q24 35 20 40 Q16 35 20 30Z" fill="#C4925A" opacity=".7"/>
+        <!-- brote pequeño -->
+        <path d="M20 29 Q20 24 20 22" stroke="#6B9A64" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 25 Q16 22 15 19" stroke="#6B9A64" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>`;
+  }
+  // Sin datos aún
+  return `<div class="crecimiento-icon nivel-0" title="Sin contacto iniciado">
+    <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="20" cy="46" rx="10" ry="4" fill="#D8D2C9" opacity=".4"/>
+      <ellipse cx="20" cy="40" rx="6" ry="7" fill="#D8D2C9" opacity=".5"/>
+    </svg>
+  </div>`;
+}
+
 /** Tarjeta completa (vista normal) */
 function buildCard(m) {
   const card = document.createElement('div');
   card.className = 'mentoria-card';
   card.dataset.id = m.id;
 
-  const initials  = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
-  const activa    = m.mentoria_activa === true;
-  const alerta    = tieneAlerta(m);
-  const etapa     = getEtapa(m);
+  const initials   = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
+  const activa     = m.mentoria_activa === true;
+  const alerta     = tieneAlerta(m);
+  const etapa      = getEtapa(m);
   const diasUltimo = diasDesde(m.fecha_ultimo_contacto);
   const seg = (m.seguimiento_mentor || '').trim();
   const seguimientoPreview = seg.length > 0
@@ -315,11 +374,14 @@ function buildCard(m) {
         <div class="card-email">${m.telefono || '—'}</div>
         ${etapa ? `<div class="card-etapa" style="color:${etapa.color === '#8FAF8A' ? 'var(--accent-dark)' : etapa.color}">${etapa.label} · ${etapa.dias}d</div>` : ''}
       </div>
-      <span class="card-badge-activa ${activa ? 'activa-si' : 'activa-no'}">
-        ${activa
-          ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
-          : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
-      </span>
+      <div class="card-right">
+        ${getIconoCrecimiento(m)}
+        <span class="card-badge-activa ${activa ? 'activa-si' : 'activa-no'}">
+          ${activa
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
+            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
+        </span>
+      </div>
     </div>
     <div class="card-meta">
       ${m.tipo_contacto ? `<span class="card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-1.91a2 2 0 0 1 2.11-.45c.9.374 1.852.63 2.82.7A2 2 0 0 1 21.5 15.09v3-.17z"/></svg>${m.tipo_contacto}</span>` : ''}
@@ -333,7 +395,6 @@ function buildCard(m) {
     </button>
   `;
 
-  // Botón "Contactar hoy" — no propagar el click a la tarjeta
   card.querySelector('.btn-contactar-hoy').addEventListener('click', e => {
     e.stopPropagation();
     abrirModalSeguimiento(m.id);
@@ -608,6 +669,90 @@ btnSave.addEventListener('click', async () => {
 });
 
 /* ══════════════════════════════════════════════
+   MINI CALENDARIO
+══════════════════════════════════════════════ */
+
+/**
+ * Construye el HTML del mini calendario del mes actual.
+ * Marca los contactos pasados y calcula el próximo contacto sugerido.
+ * @param {object} m - registro de mentoría
+ */
+function buildMiniCalendario(m) {
+  const hoy     = new Date();
+  const año     = hoy.getFullYear();
+  const mes     = hoy.getMonth();
+  const meses   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const dias    = ['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+
+  // Fechas de contacto registradas (pasadas)
+  const fechasContacto = new Set();
+  if (m.fecha_primer_contacto) {
+    const f = new Date(m.fecha_primer_contacto + 'T12:00:00');
+    if (f.getFullYear() === año && f.getMonth() === mes)
+      fechasContacto.add(f.getDate());
+  }
+  if (m.fecha_ultimo_contacto && m.fecha_ultimo_contacto !== m.fecha_primer_contacto) {
+    const f = new Date(m.fecha_ultimo_contacto + 'T12:00:00');
+    if (f.getFullYear() === año && f.getMonth() === mes)
+      fechasContacto.add(f.getDate());
+  }
+  // Entradas del historial de seguimiento con fecha [dd/mm/yyyy ...]
+  const regexEntrada = /\[(\d{2})\/(\d{2})\/(\d{4})/g;
+  let match;
+  while ((match = regexEntrada.exec(m.seguimiento_mentor || '')) !== null) {
+    const d = parseInt(match[1]), mo = parseInt(match[2]) - 1, y = parseInt(match[3]);
+    if (y === año && mo === mes) fechasContacto.add(d);
+  }
+
+  // Próximo contacto sugerido: 7 días después del último contacto
+  let proximoContacto = null;
+  const refFecha = m.fecha_ultimo_contacto || m.fecha_primer_contacto;
+  if (refFecha) {
+    const proximo = new Date(refFecha + 'T12:00:00');
+    proximo.setDate(proximo.getDate() + 7);
+    if (proximo.getFullYear() === año && proximo.getMonth() === mes && proximo > hoy)
+      proximoContacto = proximo.getDate();
+  }
+
+  // Primer día del mes y total de días
+  const primerDia = new Date(año, mes, 1).getDay();
+  const totalDias = new Date(año, mes + 1, 0).getDate();
+
+  // Construir grilla
+  let celdas = '';
+  for (let i = 0; i < primerDia; i++) celdas += `<div class="cal-cell empty"></div>`;
+  for (let d = 1; d <= totalDias; d++) {
+    const esHoy      = d === hoy.getDate();
+    const esContacto = fechasContacto.has(d);
+    const esProximo  = d === proximoContacto;
+    let cls = 'cal-cell';
+    if (esHoy)      cls += ' cal-hoy';
+    if (esContacto) cls += ' cal-contacto';
+    if (esProximo)  cls += ' cal-proximo';
+    const title = esContacto ? 'Contacto realizado' : esProximo ? 'Próximo contacto sugerido' : '';
+    celdas += `<div class="${cls}" title="${title}">${d}</div>`;
+  }
+
+  const leyenda = `
+    <div class="cal-leyenda">
+      <span class="cal-ley-item"><span class="cal-dot cal-dot-contacto"></span>Contacto</span>
+      <span class="cal-ley-item"><span class="cal-dot cal-dot-proximo"></span>Próximo sugerido</span>
+      <span class="cal-ley-item"><span class="cal-dot cal-dot-hoy"></span>Hoy</span>
+    </div>`;
+
+  return `
+    <div class="mini-calendario">
+      <div class="cal-header">
+        <span class="cal-mes">${meses[mes]} ${año}</span>
+      </div>
+      <div class="cal-grid-header">${dias.map(d => `<div class="cal-day-name">${d}</div>`).join('')}</div>
+      <div class="cal-grid">${celdas}</div>
+      ${leyenda}
+      ${proximoContacto ? `<p class="cal-sugerencia">💬 Próximo contacto sugerido: día ${proximoContacto}</p>` : ''}
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
    MODAL DETALLE
 ══════════════════════════════════════════════ */
 
@@ -624,15 +769,39 @@ function openDetail(id) {
   const activa = m.mentoria_activa === true;
 
   body.innerHTML = `
+
+    <!-- Crecimiento + Estado -->
+    <div class="detail-crecimiento-row">
+      <div class="detail-crecimiento-visual">
+        ${getIconoCrecimiento(m)}
+        <div class="detail-crecimiento-label">
+          ${m.tipo_contacto === 'Videollamada' ? 'Árbol · Videollamada realizada'
+            : m.respondio === 'Sí' ? 'Tallo · Respondió'
+            : m.fecha_primer_contacto ? 'Semilla · Primer contacto enviado'
+            : 'Sin contacto aún'}
+        </div>
+      </div>
+      <div class="detail-activa-badge ${activa ? 'activa-si' : 'activa-no'}">
+        ${activa
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
+          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
+      </div>
+    </div>
+
+    <!-- Mini Calendario -->
+    <div class="detail-section">
+      <div class="detail-section-title">Calendario de contactos</div>
+      ${buildMiniCalendario(m)}
+    </div>
+
+    <!-- Mensaje WhatsApp -->
     <div class="detail-section">
       <div class="detail-section-title-row">
         <span class="detail-section-title" style="margin-bottom:0;border:none">Mensaje de primer contacto</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn-copy-msg" id="btn-copy-msg">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copiar
-          </button>
-        </div>
+        <button class="btn-copy-msg" id="btn-copy-msg">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar
+        </button>
       </div>
       <div class="detail-item" style="margin-top:8px">
         <div class="detail-text-block" id="detail-msg-text">${mensajeGlobal}</div>
@@ -646,15 +815,7 @@ function openDetail(id) {
       }
     </div>
 
-    <div class="detail-section">
-      <div class="detail-section-title">Estado de mentoría</div>
-      <div class="detail-activa-badge ${activa ? 'activa-si' : 'activa-no'}">
-        ${activa
-          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Mentoría activa`
-          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Mentoría inactiva`}
-      </div>
-    </div>
-
+    <!-- Contacto -->
     <div class="detail-section">
       <div class="detail-section-title">Contacto</div>
       <div class="detail-row">
@@ -668,6 +829,7 @@ function openDetail(id) {
       <div class="detail-item"><label>Tipo de contacto</label>${val(m.tipo_contacto)}</div>
     </div>
 
+    <!-- Inquietudes -->
     <div class="detail-section">
       <div class="detail-section-title">Inquietudes del estudiante</div>
       ${(m.inquietudes || '').trim()
@@ -675,6 +837,7 @@ function openDetail(id) {
         : `<span class="empty-val">Sin registrar</span>`}
     </div>
 
+    <!-- Seguimiento -->
     <div class="detail-section">
       <div class="detail-section-title">Seguimiento del mentor</div>
       ${(m.seguimiento_mentor || '').trim()

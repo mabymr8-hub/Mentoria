@@ -722,6 +722,176 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Ícono crecimiento en tarjeta ── */
+.card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.crecimiento-icon {
+  width: 42px;
+  height: 58px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.crecimiento-icon svg { width: 100%; height: 100%; }
+
+/* hover tooltip nativo via title, pero añadimos cursor */
+.crecimiento-icon { cursor: default; }
+
+/* ── Crecimiento en detalle ── */
+.detail-crecimiento-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 6px;
+  margin-bottom: 4px;
+  gap: 12px;
+}
+
+.detail-crecimiento-visual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-crecimiento-visual .crecimiento-icon {
+  width: 48px;
+  height: 66px;
+}
+
+.detail-crecimiento-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Mini Calendario ── */
+.mini-calendario {
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: 6px;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.cal-mes {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.cal-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.cal-day-name {
+  text-align: center;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: default;
+  transition: background var(--transition);
+}
+.cal-cell.empty { background: transparent; }
+
+.cal-cell.cal-hoy {
+  background: var(--text-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-cell.cal-contacto {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Si es hoy Y contacto, contacto gana */
+.cal-cell.cal-hoy.cal-contacto {
+  background: var(--accent-dark);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.cal-cell.cal-proximo {
+  background: #FEF3C7;
+  color: #92400E;
+  font-weight: 700;
+  border: 1.5px dashed #F59E0B;
+}
+
+.cal-leyenda {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.cal-ley-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: var(--text-muted);
+}
+
+.cal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.cal-dot-contacto { background: var(--accent); }
+.cal-dot-proximo  { background: #FEF3C7; border: 1.5px dashed #F59E0B; }
+.cal-dot-hoy      { background: var(--text-primary); }
+
+.cal-sugerencia {
+  margin-top: 8px;
+  font-size: .78rem;
+  color: #92400E;
+  background: #FEF3C7;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 500;
+}
+
 /* ── Stats nuevas ── */
 .stat-warn .stat-num  { color: #C4825A; }
 .stat-cierre .stat-num { color: #7C5ABF; }
