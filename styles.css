@@ -722,6 +722,81 @@ body {
   white-space: pre-wrap;
 }
 
+/* ── Tarjeta de baja — tono gris ── */
+.mentoria-card.card-baja {
+  opacity: .72;
+  background: #F5F3F0;
+  border-color: #DDD8D0;
+}
+.mentoria-card.card-baja .card-name { color: var(--text-muted); }
+.mentoria-card.card-baja .card-avatar {
+  background: linear-gradient(135deg, #BFB8AE, #D8D2C9) !important;
+}
+.mentoria-card.card-baja .card-badge-activa {
+  background: #EDE9E4;
+  color: var(--text-muted);
+  border-color: #D8D2C9;
+}
+.mentoria-card.card-baja .card-seguimiento-preview {
+  border-left-color: #C4B8A8;
+  background: #EDE9E4;
+}
+
+/* ── Botón dar de baja ── */
+.btn-baja {
+  background: #FEF3C7;
+  color: #92400E;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  flex: 1;
+}
+.btn-baja:hover { background: #FDE68A; }
+
+.btn-baja-reactivar {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  flex: 1;
+}
+.btn-baja-reactivar:hover { background: #C8E6C4; }
+
+/* Footer detalle con 3 botones */
+.detail-footer {
+  display: flex;
+  gap: 8px;
+}
+.detail-footer .btn-danger { flex: 1; }
+.detail-footer .btn-primary { flex: 1.5; }
+
+/* ── Switch videollamada ── */
+.switch-row-video {
+  border-color: #A8C5E8;
+  background: #EFF6FF;
+}
+.switch-track-video { background: #A8C5E8; }
+input:checked + .switch-track-video { background: #3B82F6; }
+
+/* ── Stat bajas ── */
+.stat-baja .stat-num { color: #92400E; }
+
+/* ── Chip bajas ── */
+.chip-baja { border-color: #FDE68A; color: #92400E; }
+.chip-baja:hover,
+.chip-baja.active { background: #F59E0B; border-color: #F59E0B; color: #fff; }
+
 /* ── Ícono crecimiento en tarjeta ── */
 .card-right {
   display: flex;

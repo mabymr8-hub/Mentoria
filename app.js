@@ -185,7 +185,7 @@ async function loadMentorias() {
 
   const { data, error } = await db
     .from('mentorias')
-    .select('id, created_at, nombre, apellido, telefono, fecha_primer_contacto, respondio, tipo_contacto, fecha_ultimo_contacto, mentoria_activa, inquietudes, seguimiento_mentor')
+    .select('id, created_at, nombre, apellido, telefono, fecha_primer_contacto, respondio, tipo_contacto, fecha_ultimo_contacto, mentoria_activa, videollamada_realizada, dado_de_baja, fecha_baja, inquietudes, seguimiento_mentor')
     .order('created_at', { ascending: false });
 
   loadingState.classList.add('hidden');
@@ -250,11 +250,12 @@ function renderAll() {
       (m.seguimiento_mentor || '').toLowerCase().includes(term);
 
     let matchFilter = true;
-    if (currentFilter === 'activa')       matchFilter = m.mentoria_activa === true;
+    if (currentFilter === 'activa')       matchFilter = m.mentoria_activa === true && !m.dado_de_baja;
     if (currentFilter === 'respondio-si') matchFilter = m.respondio === 'Sí';
     if (currentFilter === 'respondio-no') matchFilter = m.respondio === 'No' || !m.respondio;
-    if (currentFilter === 'alerta')       matchFilter = tieneAlerta(m);
-    if (currentFilter === 'cierre')       matchFilter = esCierre(m);
+    if (currentFilter === 'alerta')       matchFilter = tieneAlerta(m) && !m.dado_de_baja;
+    if (currentFilter === 'cierre')       matchFilter = esCierre(m) && !m.dado_de_baja;
+    if (currentFilter === 'baja')         matchFilter = m.dado_de_baja === true;
 
     return matchFilter && matchSearch;
   });
@@ -292,55 +293,62 @@ function sortList(list) {
 
 /** Devuelve el SVG del ícono de crecimiento según el nivel del proceso */
 function getIconoCrecimiento(m) {
-  // Nivel 3 — Árbol: tuvo videollamada
-  if (m.tipo_contacto === 'Videollamada') {
+  // Baja — planta seca
+  if (m.dado_de_baja) {
+    return `<div class="crecimiento-icon nivel-baja" title="Dado de baja">
+      <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- tronco seco -->
+        <path d="M20 52 Q20 38 20 28" stroke="#A89080" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- rama izquierda caída -->
+        <path d="M20 38 Q13 36 10 40" stroke="#A89080" stroke-width="2" stroke-linecap="round"/>
+        <!-- rama derecha caída -->
+        <path d="M20 32 Q27 30 29 34" stroke="#A89080" stroke-width="2" stroke-linecap="round"/>
+        <!-- hoja marchita izquierda -->
+        <path d="M10 40 Q8 44 11 46 Q12 42 10 40Z" fill="#C4B8A8" opacity=".7"/>
+        <!-- hoja marchita derecha -->
+        <path d="M29 34 Q32 37 30 40 Q28 37 29 34Z" fill="#C4B8A8" opacity=".7"/>
+        <!-- hoja caída en suelo -->
+        <ellipse cx="16" cy="50" rx="4" ry="2" fill="#C4B8A8" opacity=".5" transform="rotate(-15 16 50)"/>
+        <!-- tierra -->
+        <ellipse cx="20" cy="52" rx="9" ry="3" fill="#BBA990" opacity=".4"/>
+      </svg>
+    </div>`;
+  }
+  // Nivel 3 — Árbol: videollamada realizada (campo booleano explícito)
+  if (m.videollamada_realizada) {
     return `<div class="crecimiento-icon nivel-3" title="Videollamada realizada">
       <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- tronco -->
         <rect x="17" y="34" width="6" height="18" rx="2" fill="#8B6340"/>
-        <!-- copa inferior -->
         <ellipse cx="20" cy="34" rx="13" ry="10" fill="#4A8F3F"/>
-        <!-- copa media -->
         <ellipse cx="20" cy="24" rx="10" ry="8" fill="#5AA64D"/>
-        <!-- copa superior -->
         <ellipse cx="20" cy="16" rx="7" ry="7" fill="#6BBF5E"/>
-        <!-- brillo -->
         <ellipse cx="17" cy="13" rx="2.5" ry="2" fill="#8FD97F" opacity=".6"/>
       </svg>
     </div>`;
   }
-  // Nivel 2 — Tallo con hojas: respondió
+  // Nivel 2 — Tallo: respondió
   if (m.respondio === 'Sí') {
     return `<div class="crecimiento-icon nivel-2" title="El estudiante respondió">
       <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- tallo -->
         <path d="M20 52 Q20 30 20 18" stroke="#6B9A64" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- hoja izquierda -->
         <path d="M20 32 Q10 26 11 18 Q18 22 20 32Z" fill="#8FBF84"/>
-        <!-- hoja derecha -->
         <path d="M20 26 Q30 20 29 12 Q22 16 20 26Z" fill="#6B9A64"/>
-        <!-- brote -->
         <circle cx="20" cy="16" r="3.5" fill="#A8D49E"/>
       </svg>
     </div>`;
   }
-  // Nivel 1 — Semilla: solo primer contacto enviado
+  // Nivel 1 — Semilla: primer contacto enviado
   if (m.fecha_primer_contacto) {
     return `<div class="crecimiento-icon nivel-1" title="Primer contacto enviado">
       <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- tierra -->
         <ellipse cx="20" cy="46" rx="10" ry="4" fill="#C4A882" opacity=".5"/>
-        <!-- semilla -->
         <ellipse cx="20" cy="38" rx="7" ry="9" fill="#8B6340"/>
-        <!-- línea semilla -->
         <path d="M20 30 Q24 35 20 40 Q16 35 20 30Z" fill="#C4925A" opacity=".7"/>
-        <!-- brote pequeño -->
         <path d="M20 29 Q20 24 20 22" stroke="#6B9A64" stroke-width="2" stroke-linecap="round"/>
         <path d="M20 25 Q16 22 15 19" stroke="#6B9A64" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
     </div>`;
   }
-  // Sin datos aún
   return `<div class="crecimiento-icon nivel-0" title="Sin contacto iniciado">
     <svg viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="20" cy="46" rx="10" ry="4" fill="#D8D2C9" opacity=".4"/>
@@ -352,7 +360,7 @@ function getIconoCrecimiento(m) {
 /** Tarjeta completa (vista normal) */
 function buildCard(m) {
   const card = document.createElement('div');
-  card.className = 'mentoria-card';
+  card.className = `mentoria-card${m.dado_de_baja ? ' card-baja' : ''}`;
   card.dataset.id = m.id;
 
   const initials   = `${(m.nombre || '?')[0]}${(m.apellido || '?')[0]}`.toUpperCase();
@@ -437,9 +445,9 @@ function buildRow(m) {
 /** Actualiza los números del dashboard */
 function updateStats() {
   statTotal.textContent  = allMentorias.length;
-  statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true).length;
-  statAlerta.textContent = allMentorias.filter(tieneAlerta).length;
-  statCierre.textContent = allMentorias.filter(esCierre).length;
+  statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true && !m.dado_de_baja).length;
+  statAlerta.textContent = allMentorias.filter(m => tieneAlerta(m) && !m.dado_de_baja).length;
+  document.getElementById('stat-baja').textContent = allMentorias.filter(m => m.dado_de_baja === true).length;
 }
 
 /* ══════════════════════════════════════════════
@@ -593,7 +601,8 @@ function clearForm() {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
-  document.getElementById('form-activa').checked = false;
+  document.getElementById('form-activa').checked        = false;
+  document.getElementById('form-videollamada').checked  = false;
 }
 
 /** Rellena el formulario con los datos de una mentoría */
@@ -606,8 +615,9 @@ function fillForm(m) {
   document.getElementById('form-fecha-ultimo').value  = m.fecha_ultimo_contacto || '';
   document.getElementById('form-respondio').value     = m.respondio || '';
   document.getElementById('form-tipo-contacto').value = m.tipo_contacto || '';
-  document.getElementById('form-activa').checked      = m.mentoria_activa === true;
-  document.getElementById('form-inquietudes').value   = m.inquietudes || '';
+  document.getElementById('form-activa').checked               = m.mentoria_activa === true;
+  document.getElementById('form-videollamada').checked          = m.videollamada_realizada === true;
+  document.getElementById('form-inquietudes').value             = m.inquietudes || '';
   document.getElementById('form-seguimiento').value   = m.seguimiento_mentor || '';
 }
 
@@ -621,8 +631,9 @@ function readForm() {
     fecha_ultimo_contacto:document.getElementById('form-fecha-ultimo').value || null,
     respondio:            document.getElementById('form-respondio').value || null,
     tipo_contacto:        document.getElementById('form-tipo-contacto').value || null,
-    mentoria_activa:      document.getElementById('form-activa').checked,
-    inquietudes:          document.getElementById('form-inquietudes').value.trim() || null,
+    mentoria_activa:           document.getElementById('form-activa').checked,
+    videollamada_realizada:    document.getElementById('form-videollamada').checked,
+    inquietudes:               document.getElementById('form-inquietudes').value.trim() || null,
     seguimiento_mentor:   document.getElementById('form-seguimiento').value.trim() || null,
   };
 }
@@ -775,10 +786,11 @@ function openDetail(id) {
       <div class="detail-crecimiento-visual">
         ${getIconoCrecimiento(m)}
         <div class="detail-crecimiento-label">
-          ${m.tipo_contacto === 'Videollamada' ? 'Árbol · Videollamada realizada'
-            : m.respondio === 'Sí' ? 'Tallo · Respondió'
-            : m.fecha_primer_contacto ? 'Semilla · Primer contacto enviado'
-            : 'Sin contacto aún'}
+          ${m.dado_de_baja ? 'Planta seca · Dado de baja'
+          : m.videollamada_realizada ? 'Árbol · Videollamada realizada'
+          : m.respondio === 'Sí' ? 'Tallo · Respondió'
+          : m.fecha_primer_contacto ? 'Semilla · Primer contacto enviado'
+          : 'Sin contacto aún'}
         </div>
       </div>
       <div class="detail-activa-badge ${activa ? 'activa-si' : 'activa-no'}">
@@ -849,6 +861,18 @@ function openDetail(id) {
   modalDetail.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
+  // Actualizar botón baja según estado actual
+  const btnBaja = document.getElementById('detail-btn-baja');
+  if (m.dado_de_baja) {
+    btnBaja.textContent = '↩ Reactivar';
+    btnBaja.classList.add('btn-baja-reactivar');
+    btnBaja.classList.remove('btn-baja');
+  } else {
+    btnBaja.textContent = 'Dar de baja';
+    btnBaja.classList.add('btn-baja');
+    btnBaja.classList.remove('btn-baja-reactivar');
+  }
+
   document.getElementById('btn-copy-msg').addEventListener('click', async () => {
     const texto = document.getElementById('detail-msg-text').innerText;
     try {
@@ -892,6 +916,41 @@ detailBtnEdit.addEventListener('click', () => {
   const id = currentDetailId;
   closeDetailModal();
   openFormModal(id);
+});
+
+/** Botón Dar de baja / Reactivar */
+document.getElementById('detail-btn-baja').addEventListener('click', async () => {
+  const m = allMentorias.find(x => x.id === currentDetailId);
+  if (!m) return;
+
+  const esBaja = m.dado_de_baja === true;
+
+  if (esBaja) {
+    // Reactivar
+    if (!confirm(`¿Reactivar la mentoría de ${m.nombre} ${m.apellido}?`)) return;
+    const { error } = await db
+      .from('mentorias')
+      .update({ dado_de_baja: false, fecha_baja: null })
+      .eq('id', currentDetailId);
+    if (error) { showToast('Error al reactivar.'); return; }
+    closeDetailModal();
+    showToast(`✓ ${m.nombre} reactivada`);
+  } else {
+    // Dar de baja
+    if (!confirm(`¿Dar de baja a ${m.nombre} ${m.apellido}?\nSe quitará de las activas y se marcará con planta seca.`)) return;
+    const { error } = await db
+      .from('mentorias')
+      .update({
+        dado_de_baja: true,
+        mentoria_activa: false,
+        fecha_baja: new Date().toISOString().slice(0, 10)
+      })
+      .eq('id', currentDetailId);
+    if (error) { showToast('Error al dar de baja.'); return; }
+    closeDetailModal();
+    showToast(`${m.nombre} dada de baja`);
+  }
+  await loadMentorias();
 });
 
 /** Botón Eliminar en el modal de detalle */
