@@ -1173,7 +1173,7 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
   const headers = [
     'Nombre', 'Apellido', 'Teléfono',
     'Primer contacto', 'Respondió', 'Tipo de contacto',
-    'Último contacto', 'Mentoría activa',
+    'Último contacto', 'Estado',
     'Inquietudes del estudiante', 'Seguimiento del mentor'
   ];
 
@@ -1183,7 +1183,7 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
     m.respondio || '—',
     m.tipo_contacto || '—',
     m.fecha_ultimo_contacto ? formatDate(m.fecha_ultimo_contacto) : '—',
-    m.mentoria_activa ? 'Sí' : 'No',
+    m.dado_de_baja ? 'Baja' : m.mentoria_activa ? 'Activa' : 'Inactiva',
     m.inquietudes || '—',
     m.seguimiento_mentor || '—'
   ]);
@@ -1264,11 +1264,12 @@ document.getElementById('btn-export-pdf').addEventListener('click', () => {
     doc.setTextColor(255, 255, 255);
     doc.text(`${m.nombre} ${m.apellido}`.toUpperCase(), ML + 3, y + 6.2);
 
-    // Badge mentoría activa — sin caracteres especiales para evitar encoding issues
-    const badgeLabel = activa ? 'ACTIVA' : 'INACTIVA';
-    const badgeColor = activa ? [144, 196, 138] : [180, 170, 160];
-    const badgeW = activa ? 16 : 20;
-    const badgeX = ML + CW - badgeW - 2;
+    // Badge estado — BAJA tiene prioridad sobre INACTIVA
+    const esBaja   = m.dado_de_baja === true;
+    const badgeLabel = esBaja ? 'BAJA' : activa ? 'ACTIVA' : 'INACTIVA';
+    const badgeColor = esBaja ? [196, 148, 100] : activa ? [144, 196, 138] : [180, 170, 160];
+    const badgeW     = esBaja ? 14 : activa ? 16 : 20;
+    const badgeX     = ML + CW - badgeW - 2;
     doc.setFillColor(...badgeColor);
     doc.roundedRect(badgeX, y + 1.5, badgeW, 6, 1, 1, 'F');
     doc.setFont('helvetica', 'bold');
