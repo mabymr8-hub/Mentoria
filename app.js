@@ -397,6 +397,7 @@ function buildCard(m) {
       ${m.fecha_ultimo_contacto ? `<span class="card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${formatDate(m.fecha_ultimo_contacto)}</span>` : ''}
     </div>
     ${seguimientoPreview ? `<div class="card-seguimiento-preview">${seguimientoPreview}</div>` : ''}
+    <div class="card-spacer"></div>
     <button class="btn-contactar-hoy" data-id="${m.id}" title="Registrar contacto hoy">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-1.91a2 2 0 0 1 2.11-.45c.9.374 1.852.63 2.82.7A2 2 0 0 1 21.5 15.09z"/></svg>
       Contactar hoy

@@ -1532,16 +1532,21 @@ input:checked + .switch-track-video { background: #3B82F6; }
     align-items: stretch;
   }
 
-  /* Cada tarjeta ocupa toda la altura de su celda */
   .mentoria-card {
     display: flex;
     flex-direction: column;
   }
 
-  /* El preview de seguimiento y el botón se empujan al fondo */
-  .mentoria-card .card-meta { flex-shrink: 0; }
-  .mentoria-card .card-seguimiento-preview { flex: 1; }
-  .mentoria-card .btn-contactar-hoy { margin-top: auto; flex-shrink: 0; }
+  /* El spacer toma todo el espacio libre entre el contenido y el botón */
+  .card-spacer {
+    flex: 1;
+    min-height: 8px;
+  }
+
+  .mentoria-card .btn-contactar-hoy {
+    flex-shrink: 0;
+    margin-top: 0;
+  }
 
   .loading-state, .empty-state {
     grid-column: 1 / -1;
