@@ -447,6 +447,7 @@ function buildRow(m) {
 function updateStats() {
   statTotal.textContent  = allMentorias.length;
   statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true && !m.dado_de_baja).length;
+  document.getElementById('stat-inactiva').textContent = allMentorias.filter(m => !m.mentoria_activa && !m.dado_de_baja).length;
   statAlerta.textContent = allMentorias.filter(m => tieneAlerta(m) && !m.dado_de_baja).length;
   document.getElementById('stat-baja').textContent = allMentorias.filter(m => m.dado_de_baja === true).length;
 }

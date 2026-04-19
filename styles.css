@@ -968,8 +968,22 @@ input:checked + .switch-track-video { background: #3B82F6; }
 }
 
 /* ── Stats nuevas ── */
-.stat-warn .stat-num  { color: #C4825A; }
+.stat-warn .stat-num   { color: #C4825A; }
 .stat-cierre .stat-num { color: #7C5ABF; }
+.stat-inactiva .stat-num { color: #7A6E62; }
+
+/* 5 stats en desktop */
+@media (min-width: 600px) {
+  .stats-row { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* En móvil: 2 columnas con wrap */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
 
 /* ── Search + controles fila ── */
 .search-controls-row {
