@@ -341,8 +341,8 @@ body {
 /* ── Stats ── */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   margin-bottom: 20px;
 }
 
@@ -350,7 +350,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 10px 6px;
+  padding: 14px 10px;
   text-align: center;
   box-shadow: var(--shadow-sm);
 }
@@ -358,17 +358,17 @@ body {
 .stat-num {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: var(--text-primary);
   line-height: 1;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
-  font-size: .62rem;
+  font-size: .7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   color: var(--text-muted);
 }
 
@@ -971,6 +971,13 @@ input:checked + .switch-track-video { background: #3B82F6; }
 .stat-warn .stat-num     { color: #C4825A; }
 .stat-cierre .stat-num   { color: #7C5ABF; }
 .stat-inactiva .stat-num { color: #7A6E62; }
+
+/* Badge baja en tarjeta */
+.activa-baja {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
 
 /* ── Search + controles fila ── */
 .search-controls-row {

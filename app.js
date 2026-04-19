@@ -384,10 +384,12 @@ function buildCard(m) {
       </div>
       <div class="card-right">
         ${getIconoCrecimiento(m)}
-        <span class="card-badge-activa ${activa ? 'activa-si' : 'activa-no'}">
-          ${activa
-            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
-            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
+        <span class="card-badge-activa ${m.dado_de_baja ? 'activa-baja' : activa ? 'activa-si' : 'activa-no'}">
+          ${m.dado_de_baja
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Baja`
+            : activa
+              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> Activa`
+              : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Inactiva`}
         </span>
       </div>
     </div>
@@ -447,8 +449,8 @@ function buildRow(m) {
 function updateStats() {
   statTotal.textContent  = allMentorias.length;
   statActiva.textContent = allMentorias.filter(m => m.mentoria_activa === true && !m.dado_de_baja).length;
-  document.getElementById('stat-inactiva').textContent = allMentorias.filter(m => !m.mentoria_activa && !m.dado_de_baja).length;
-  statAlerta.textContent = allMentorias.filter(m => tieneAlerta(m) && !m.dado_de_baja).length;
+  // Sin contacto = inactivas + las que tienen más de 14 días sin contacto (sin contar bajas)
+  statAlerta.textContent = allMentorias.filter(m => !m.dado_de_baja && (!m.mentoria_activa || tieneAlerta(m))).length;
   document.getElementById('stat-baja').textContent = allMentorias.filter(m => m.dado_de_baja === true).length;
 }
 
