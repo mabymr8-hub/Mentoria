@@ -57,8 +57,19 @@ body {
 }
 
 /* ── Screens ── */
-.screen { display: none; }
-.screen.active { display: block; }
+/* ── Screens — cada pantalla ocupa 100% del viewport ── */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+}
+.screen.active {
+  display: block;
+  animation: fadeIn .25s ease both;
+}
 
 /* ══════════════════════════════════════
    LOGIN
