@@ -1554,22 +1554,23 @@ input:checked + .switch-track-video { background: #3B82F6; }
   .mentoria-card {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    width: 100%;
     box-sizing: border-box;
   }
 
   .card-spacer { flex: 1; min-height: 0; }
-  .mentoria-card .card-alerta-banner    { flex-shrink: 0; }
-  .mentoria-card .card-top              { flex-shrink: 0; }
-  .mentoria-card .card-meta             { flex-shrink: 0; }
+  .mentoria-card .card-alerta-banner       { flex-shrink: 0; }
+  .mentoria-card .card-top                 { flex-shrink: 0; }
+  .mentoria-card .card-meta                { flex-shrink: 0; }
   .mentoria-card .card-seguimiento-preview { flex-shrink: 0; }
-  .mentoria-card .btn-contactar-hoy     { flex-shrink: 0; margin-top: 0; }
+  .mentoria-card .btn-contactar-hoy        { flex-shrink: 0; margin-top: 0; }
 
   .loading-state, .empty-state { grid-column: 1 / -1; }
 }
 
 @media (min-width: 1100px) {
   .cards-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
   }
 }
