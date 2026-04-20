@@ -154,6 +154,41 @@ body {
   margin-top: 20px;
 }
 
+/* Links de navegación entre paneles */
+.login-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: .82rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 2px 0;
+  transition: color var(--transition);
+}
+.link-btn:hover { color: var(--accent-dark); }
+
+/* Mensaje de éxito */
+.ok-msg {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .85rem;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
 /* ══════════════════════════════════════
    FORM ELEMENTS (shared)
 ══════════════════════════════════════ */

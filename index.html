@@ -18,14 +18,16 @@
 <body>
 
   <!-- ══════════════════════════════════════
-       PANTALLA DE LOGIN
+       PANTALLA DE LOGIN / REGISTRO / RESET
   ══════════════════════════════════════ -->
   <div id="login-screen" class="screen active">
     <div class="login-bg">
       <div class="login-orb login-orb-1"></div>
       <div class="login-orb login-orb-2"></div>
     </div>
-    <div class="login-card">
+
+    <!-- ── PANEL LOGIN ── -->
+    <div class="login-card" id="panel-login">
       <div class="login-logo">
         <span class="logo-leaf">🌱</span>
         <h1>Maby<br/><em>Mentorías</em></h1>
@@ -41,8 +43,61 @@
       </div>
       <p id="login-error" class="error-msg hidden"></p>
       <button class="btn-primary" id="btn-login">Ingresar</button>
+      <div class="login-links">
+        <button class="link-btn" id="ir-registro">¿No tenés cuenta? Registrate</button>
+        <button class="link-btn" id="ir-reset">¿Olvidaste tu contraseña?</button>
+      </div>
       <p class="login-footer">Counselor · Holos Capital Counseling</p>
     </div>
+
+    <!-- ── PANEL REGISTRO ── -->
+    <div class="login-card hidden" id="panel-registro">
+      <div class="login-logo">
+        <span class="logo-leaf">🌱</span>
+        <h1>Crear<br/><em>cuenta</em></h1>
+      </div>
+      <p class="login-tagline">Completá tus datos para registrarte</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="reg-password2" placeholder="Repetí la contraseña" autocomplete="new-password" />
+      </div>
+      <p id="reg-error" class="error-msg hidden"></p>
+      <p id="reg-ok" class="ok-msg hidden"></p>
+      <button class="btn-primary" id="btn-registro">Crear cuenta</button>
+      <div class="login-links">
+        <button class="link-btn" id="ir-login-desde-reg">← Volver al inicio de sesión</button>
+      </div>
+      <p class="login-footer">Counselor · Holos Capital Counseling</p>
+    </div>
+
+    <!-- ── PANEL RECUPERAR CONTRASEÑA ── -->
+    <div class="login-card hidden" id="panel-reset">
+      <div class="login-logo">
+        <span class="logo-leaf">🌱</span>
+        <h1>Recuperar<br/><em>contraseña</em></h1>
+      </div>
+      <p class="login-tagline">Te enviamos un link a tu email</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reset-email" placeholder="tu@email.com" autocomplete="email" />
+      </div>
+      <p id="reset-error" class="error-msg hidden"></p>
+      <p id="reset-ok" class="ok-msg hidden"></p>
+      <button class="btn-primary" id="btn-reset">Enviar link de recuperación</button>
+      <div class="login-links">
+        <button class="link-btn" id="ir-login-desde-reset">← Volver al inicio de sesión</button>
+      </div>
+      <p class="login-footer">Counselor · Holos Capital Counseling</p>
+    </div>
+
   </div>
 
   <!-- ══════════════════════════════════════

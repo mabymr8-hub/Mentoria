@@ -95,52 +95,139 @@ const statCierre     = document.getElementById('stat-cierre');
    AUTENTICACIÓN
 ══════════════════════════════════════════════ */
 
-/**
- * Al cargar la página, verificamos si ya hay sesión activa.
- * Supabase mantiene la sesión en localStorage automáticamente.
- */
+/** Navegación entre paneles del login */
+function mostrarPanel(id) {
+  ['panel-login', 'panel-registro', 'panel-reset'].forEach(p => {
+    document.getElementById(p).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  ['login-error','reg-error','reg-ok','reset-error','reset-ok'].forEach(mid => {
+    const el = document.getElementById(mid);
+    if (el) { el.classList.add('hidden'); el.textContent = ''; }
+  });
+}
+
+document.getElementById('ir-registro').addEventListener('click', () => mostrarPanel('panel-registro'));
+document.getElementById('ir-reset').addEventListener('click', () => mostrarPanel('panel-reset'));
+document.getElementById('ir-login-desde-reg').addEventListener('click', () => mostrarPanel('panel-login'));
+document.getElementById('ir-login-desde-reset').addEventListener('click', () => mostrarPanel('panel-login'));
+
+/** Al cargar, verificamos sesión activa */
 async function checkSession() {
   const { data: { session } } = await db.auth.getSession();
   if (session) {
     showApp();
+    await loadMensajeGlobal();
     loadMentorias();
   } else {
     showLogin();
   }
 }
 
-/** Intenta hacer login con email y contraseña */
+/** LOGIN */
 btnLogin.addEventListener('click', async () => {
   const email = loginEmail.value.trim();
   const pass  = loginPassword.value;
-
-  if (!email || !pass) {
-    showLoginError('Completá email y contraseña.');
-    return;
-  }
+  if (!email || !pass) { showLoginError('Completá email y contraseña.'); return; }
 
   btnLogin.textContent = 'Ingresando...';
   btnLogin.disabled = true;
   loginError.classList.add('hidden');
 
   const { error } = await db.auth.signInWithPassword({ email, password: pass });
-
   btnLogin.textContent = 'Ingresar';
   btnLogin.disabled = false;
 
-  if (error) {
-    showLoginError('Email o contraseña incorrectos.');
-    return;
-  }
-
+  if (error) { showLoginError('Email o contraseña incorrectos.'); return; }
   showApp();
   await loadMensajeGlobal();
   loadMentorias();
 });
 
-/** Permite login con Enter */
 [loginEmail, loginPassword].forEach(el => {
   el.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); });
+});
+
+/** REGISTRO */
+document.getElementById('btn-registro').addEventListener('click', async () => {
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-password').value;
+  const pass2  = document.getElementById('reg-password2').value;
+  const errEl  = document.getElementById('reg-error');
+  const okEl   = document.getElementById('reg-ok');
+  const btn    = document.getElementById('btn-registro');
+
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  if (!email || !pass || !pass2) {
+    errEl.textContent = 'Completá todos los campos.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (pass.length < 6) {
+    errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (pass !== pass2) {
+    errEl.textContent = 'Las contraseñas no coinciden.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  btn.textContent = 'Creando cuenta...';
+  btn.disabled = true;
+  const { error } = await db.auth.signUp({ email, password: pass });
+  btn.textContent = 'Crear cuenta';
+  btn.disabled = false;
+
+  if (error) {
+    errEl.textContent = error.message.includes('already registered')
+      ? 'Ese email ya tiene una cuenta. Iniciá sesión.'
+      : 'Error al crear la cuenta. Intentá de nuevo.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  okEl.textContent = '✓ Cuenta creada. Revisá tu email para confirmarla y luego iniciá sesión.';
+  okEl.classList.remove('hidden');
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-password2').value = '';
+});
+
+/** RECUPERAR CONTRASEÑA */
+document.getElementById('btn-reset').addEventListener('click', async () => {
+  const email = document.getElementById('reset-email').value.trim();
+  const errEl = document.getElementById('reset-error');
+  const okEl  = document.getElementById('reset-ok');
+  const btn   = document.getElementById('btn-reset');
+
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  if (!email) {
+    errEl.textContent = 'Ingresá tu email.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+  btn.textContent = 'Enviar link de recuperación';
+  btn.disabled = false;
+
+  if (error) {
+    errEl.textContent = 'Error al enviar. Verificá la dirección de email.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  okEl.textContent = '✓ Link enviado. Revisá tu bandeja de entrada (y el spam).';
+  okEl.classList.remove('hidden');
+  document.getElementById('reset-email').value = '';
+});
+
+document.getElementById('reset-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-reset').click();
 });
 
 /** Cierra sesión */
@@ -155,6 +242,7 @@ function showLoginError(msg) {
 }
 
 function showLogin() {
+  mostrarPanel('panel-login');
   loginScreen.classList.add('active');
   appScreen.classList.remove('active');
 }
