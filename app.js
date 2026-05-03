@@ -455,14 +455,16 @@ function buildCard(m) {
   const activa     = m.mentoria_activa === true;
   const alerta     = tieneAlerta(m);
   const etapa      = getEtapa(m);
-  const diasUltimo = diasDesde(m.fecha_ultimo_contacto);
+  // Usar último contacto si existe, sino primer contacto como fallback
+  const fechaRefAlerta = m.fecha_ultimo_contacto || m.fecha_primer_contacto;
+  const diasUltimo = diasDesde(fechaRefAlerta);
   const seg = (m.seguimiento_mentor || '').trim();
   const seguimientoPreview = seg.length > 0
     ? seg.replace(/\n+/g, ' · ').slice(0, 100) + (seg.length > 100 ? '…' : '')
     : null;
 
   card.innerHTML = `
-    ${alerta ? `<div class="card-alerta-banner">⚠️ Sin contacto hace ${diasUltimo} días</div>` : ''}
+    ${alerta && diasUltimo !== null ? `<div class="card-alerta-banner">⚠️ Sin contacto hace ${diasUltimo} día${diasUltimo === 1 ? '' : 's'}</div>` : ''}
     <div class="card-top">
       <div class="card-avatar" style="${etapa ? `background:linear-gradient(135deg,${etapa.color},${etapa.color}99)` : ''}">${initials}</div>
       <div class="card-info">
