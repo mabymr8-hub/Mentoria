@@ -175,6 +175,7 @@ body {
 .btn-ojo:hover { color: var(--accent); }
 
 /* ── Login footer ── */
+.login-footer {
   text-align: center;
   font-size: .75rem;
   color: var(--text-muted);
