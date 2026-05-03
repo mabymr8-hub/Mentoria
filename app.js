@@ -1523,6 +1523,17 @@ function today() {
   return new Date().toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+/* ── Ojos de contraseña ── */
+document.querySelectorAll('.btn-ojo').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.target);
+    const mostrar = input.type === 'password';
+    input.type = mostrar ? 'text' : 'password';
+    btn.querySelector('.ojo-cerrado').style.display = mostrar ? 'none'  : 'block';
+    btn.querySelector('.ojo-abierto').style.display  = mostrar ? 'block' : 'none';
+  });
+});
+
 /* ══════════════════════════════════════════════
    INICIALIZACIÓN
 ══════════════════════════════════════════════ */

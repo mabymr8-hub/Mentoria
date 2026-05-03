@@ -147,7 +147,34 @@ body {
   padding-left: 50px;
 }
 
-.login-footer {
+/* ── Ojo contraseña ── */
+.input-pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-pass-wrap input {
+  padding-right: 44px;
+}
+
+.btn-ojo {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+.btn-ojo:hover { color: var(--accent); }
+
+/* ── Login footer ── */
   text-align: center;
   font-size: .75rem;
   color: var(--text-muted);
